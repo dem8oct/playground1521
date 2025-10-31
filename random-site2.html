@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Random Day Generator2</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f1f5ff;
+        --surface: #ffffff;
+        --primary: #4760ff;
+        --accent: #ff7a6c;
+        --text: #1d2736;
+        --muted: #5b6a7f;
+        --shadow: 0 26px 60px rgba(30, 41, 59, 0.18);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top left, rgba(71, 96, 255, 0.25), transparent 55%),
+          radial-gradient(circle at bottom right, rgba(255, 122, 108, 0.22), transparent 50%), var(--bg);
+        color: var(--text);
+        padding: 2rem;
+      }
+
+      main {
+        width: min(680px, 100%);
+        background: var(--surface);
+        border-radius: 24px;
+        padding: clamp(2rem, 3vw + 1.4rem, 3.2rem);
+        box-shadow: var(--shadow);
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(2.1rem, 4vw, 2.8rem);
+        letter-spacing: 0.04em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 999px;
+        padding: 0.4rem 1rem;
+        background: rgba(71, 96, 255, 0.12);
+        color: var(--primary);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.4rem;
+      }
+
+      section + section {
+        margin-top: 1.8rem;
+      }
+
+      h2 {
+        margin: 0 0 0.85rem;
+        font-size: 1.15rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      #theme-title {
+        font-size: 1.85rem;
+        margin: 0;
+      }
+
+      #theme-description {
+        margin: 0.65rem 0 1.2rem;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .badge-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .badge {
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid rgba(71, 96, 255, 0.24);
+        background: rgba(71, 96, 255, 0.08);
+        color: var(--primary);
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+      }
+
+      .grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .mission {
+        border-radius: 18px;
+        padding: 1.1rem 1.2rem;
+        background: linear-gradient(145deg, rgba(71, 96, 255, 0.12), rgba(255, 122, 108, 0.12));
+        border: 1px solid rgba(71, 96, 255, 0.14);
+      }
+
+      .mission h3 {
+        margin: 0 0 0.4rem;
+        font-size: 1.05rem;
+      }
+
+      .mission p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      blockquote {
+        margin: 0;
+        padding-left: 1rem;
+        border-left: 4px solid var(--accent);
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 1.9rem;
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 16px 32px rgba(71, 96, 255, 0.34);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      button:hover,
+      button:focus-visible {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 40px rgba(71, 96, 255, 0.38);
+        outline: none;
+      }
+
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 10px 22px rgba(71, 96, 255, 0.28);
+      }
+
+      footer {
+        margin-top: 2.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: rgba(29, 39, 54, 0.62);
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 1.5rem;
+        }
+
+        main {
+          border-radius: 18px;
+          padding: 2rem;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="pill">Fresh inspiration</div>
+        <h1>Random Day Generator</h1>
+        <p>Shuffle a mini set of prompts to brighten your day whenever you need a spark.</p>
+      </header>
+
+      <section aria-labelledby="theme-title">
+        <h2>Theme of the Moment</h2>
+        <h3 id="theme-title"></h3>
+        <p id="theme-description"></p>
+        <div class="badge-stack" id="theme-tags" aria-live="polite"></div>
+      </section>
+
+      <section>
+        <h2>Your Mini Missions</h2>
+        <div class="grid" id="mission-grid" aria-live="polite"></div>
+      </section>
+
+      <section>
+        <h2>Quote to Pocket</h2>
+        <blockquote id="quote" aria-live="polite"></blockquote>
+      </section>
+
+      <div class="controls">
+        <button id="shuffle" type="button">Shuffle the Day</button>
+      </div>
+
+      <footer>Made with curiosity and a sprinkle of chance.</footer>
+    </main>
+
+    <script>
+      const themes = [
+        {
+          title: "Aurora Breakfast",
+          description:
+            "Wake up with the colors of dawn. Let the morning light pick your playlist and sip something warm while you watch the sky stretch.",
+          tags: ["sunrise", "soft beats", "warm mug"],
+        },
+        {
+          title: "Balcony Observatory",
+          description:
+            "Turn your nearest balcony or window into a mini observatory. Name the moving clouds and note the constellations you invent.",
+          tags: ["sky notes", "night owl", "stargaze"],
+        },
+        {
+          title: "Pocket Gallery",
+          description:
+            "Curate tiny exhibits in your pocket. Arrange your ticket stubs, receipts, or little finds into a story worth sharing.",
+          tags: ["collect", "story", "display"],
+        },
+        {
+          title: "Raincoat Disco",
+          description:
+            "Rain? Perfect. Put on a bright coat, grab headphones, and let puddles be your dance floor between errands.",
+          tags: ["rhythm", "shine", "movement"],
+        },
+        {
+          title: "Daydream Post",
+          description:
+            "Write a postcard from a future adventure. Seal it with optimism and leave it somewhere you'll find in a week.",
+          tags: ["hope", "letter", "future self"],
+        },
+      ];
+
+      const missions = [
+        {
+          title: "Compliment Relay",
+          text: "Compliment something ordinary, then text a friend inviting them to continue the relay.",
+        },
+        {
+          title: "Window Soundtrack",
+          text: "Pick a song that matches your current view and let it set the tone for your next task.",
+        },
+        {
+          title: "Pocket Museum",
+          text: "Collect three items nearby and write the museum-style description cards they deserve.",
+        },
+        {
+          title: "Color Echo",
+          text: "Spot two objects that share the same color but serve different purposes. Snap a quick photo of the duo.",
+        },
+        {
+          title: "Kindness Draft",
+          text: "Draft a kind message for someone you haven't spoken to in a while. Send it if it feels right.",
+        },
+        {
+          title: "Flavor Twist",
+          text: "Add one unexpected ingredient to your next snack and rename it like it's on a cafe menu.",
+        },
+        {
+          title: "Micro Adventure",
+          text: "Take a five-minute detour on your walk and note the most curious thing you spot.",
+        },
+        {
+          title: "Margin Message",
+          text: "Write a cheerful note in the margin of your notebook for future-you to discover.",
+        },
+      ];
+
+      const quotes = [
+        '"Carry stardust in your pocket; it brightens hallways when lights feel dim." — River S.',
+        '"If wonder feels lost, rename your next errand an adventure and go." — Lani G.',
+        '"Scribble the doorway you need and step through without asking." — Anonymous Daydreamer',
+        '"Curiosity is a muscle—stretch, lift, and laugh with it daily." — Tuesday Society',
+        '"Ordinary things are only waiting for a bold introduction." — L. Ortiz',
+      ];
+
+      const themeTitle = document.getElementById("theme-title");
+      const themeDescription = document.getElementById("theme-description");
+      const themeTags = document.getElementById("theme-tags");
+      const missionGrid = document.getElementById("mission-grid");
+      const quoteBox = document.getElementById("quote");
+      const shuffleButton = document.getElementById("shuffle");
+
+      const getRandomItems = (collection, count) => {
+        const list = [...collection];
+        const picked = [];
+        while (picked.length < count && list.length) {
+          const index = Math.floor(Math.random() * list.length);
+          picked.push(list.splice(index, 1)[0]);
+        }
+        return picked;
+      };
+
+      const renderTheme = (theme) => {
+        themeTitle.textContent = theme.title;
+        themeDescription.textContent = theme.description;
+        themeTags.innerHTML = theme.tags
+          .map((tag) => `<span class="badge">${tag}</span>`)
+          .join("");
+      };
+
+      const renderMissions = (items) => {
+        missionGrid.innerHTML = items
+          .map(
+            (item) => `
+              <article class="mission">
+                <h3>${item.title}</h3>
+                <p>${item.text}</p>
+              </article>
+            `
+          )
+          .join("");
+      };
+
+      const randomize = () => {
+        const [theme] = getRandomItems(themes, 1);
+        renderTheme(theme);
+        renderMissions(getRandomItems(missions, 3));
+        quoteBox.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+      };
+
+      shuffleButton.addEventListener("click", () => {
+        randomize();
+        shuffleButton.textContent = "Shuffle Again";
+      });
+
+      randomize();
+    </script>
+  </body>
+</html>
