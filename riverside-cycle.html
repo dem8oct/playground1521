@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Riverside Cycle Co. | City Cruiser Bike</title>
+    <meta
+      name="description"
+      content="Riverside Cycle Co. offers the City Cruiser bike with friendly service, local test rides, and confident neighborhood commuting."
+    />
+    <meta property="og:title" content="Riverside Cycle Co. City Cruiser" />
+    <meta
+      property="og:description"
+      content="Discover the City Cruiser at Riverside Cycle Co.—local experts, smooth rides, and easy test-ride bookings."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --hero: linear-gradient(135deg, #0d4d71 0%, #1b80a6 100%);
+        --surface: #ffffff;
+        --accent: #ffb344;
+        --accent-dark: #e09526;
+        --text: #102331;
+        --muted: #4b5c68;
+        --shadow: 0 18px 40px rgba(16, 35, 49, 0.16);
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      .container {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+      }
+
+      header {
+        background: var(--surface);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 2px 12px rgba(16, 35, 49, 0.08);
+      }
+
+      .top-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+      }
+
+      .logo {
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 1.4rem;
+        padding: 0;
+        margin: 0;
+      }
+
+      nav a {
+        font-weight: 600;
+        color: var(--muted);
+        position: relative;
+      }
+
+      nav a::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 -0.35rem;
+        height: 2px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: transform 0.2s ease;
+      }
+
+      nav a:hover::after,
+      nav a:focus-visible::after {
+        transform: scaleX(1);
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        gap: 5rem;
+      }
+
+      .hero {
+        background: var(--hero);
+        color: #f4fbff;
+        padding: clamp(3rem, 5vw + 1rem, 6rem) 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        width: 420px;
+        height: 420px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        top: -140px;
+        right: -120px;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        bottom: -120px;
+        left: -80px;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 1.5rem;
+        max-width: 620px;
+      }
+
+      h1 {
+        font-size: clamp(2.5rem, 6vw, 3.5rem);
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .lead {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+
+      .hero-note {
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent);
+        color: #102331;
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 2.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-dark);
+        transform: translateY(-2px);
+      }
+
+      section {
+        padding: 0 0 0.5rem;
+      }
+
+      section h2 {
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        margin-bottom: 1rem;
+        color: var(--text);
+      }
+
+      .features-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .feature-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.3rem;
+        box-shadow: 0 12px 30px rgba(16, 35, 49, 0.08);
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(15, 77, 113, 0.12), rgba(255, 179, 68, 0.25));
+      }
+
+      .feature-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .feature-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .specs {
+        background: var(--surface);
+        border-radius: 18px;
+        padding: clamp(2rem, 3vw + 1.2rem, 3rem);
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 2rem;
+      }
+
+      .specs-columns {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .spec-list ul,
+      .includes ul {
+        padding-left: 1.1rem;
+        margin: 0;
+        display: grid;
+        gap: 0.4rem;
+      }
+
+      .price-tag {
+        font-size: 2.4rem;
+        font-weight: 700;
+        margin: 0.4rem 0;
+      }
+
+      .includes h3 {
+        font-size: 1rem;
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .testimonials {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .testimonial {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.4rem;
+        box-shadow: 0 10px 24px rgba(16, 35, 49, 0.08);
+        display: grid;
+        gap: 1rem;
+      }
+
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(15, 77, 113, 0.35), rgba(255, 179, 68, 0.45));
+      }
+
+      .testimonial p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .testimonial strong {
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      .contact-card {
+        background: var(--surface);
+        border-radius: 18px;
+        padding: clamp(2rem, 3vw + 1.2rem, 3rem);
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 2rem;
+      }
+
+      form {
+        display: grid;
+        gap: 1rem;
+      }
+
+      label {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      input {
+        width: 100%;
+        border-radius: 12px;
+        border: 1.5px solid rgba(16, 35, 49, 0.2);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+      }
+
+      input:focus {
+        border-color: var(--accent);
+      }
+
+      .secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 2px solid var(--accent);
+        color: var(--accent-dark);
+        padding: 0.7rem 2rem;
+        font-weight: 700;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .secondary-btn:hover {
+        background: rgba(255, 179, 68, 0.12);
+      }
+
+      .visit-info {
+        display: grid;
+        gap: 0.6rem;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      footer {
+        background: #0d1c26;
+        color: rgba(255, 255, 255, 0.72);
+        padding: 1.5rem 0;
+        font-size: 0.8rem;
+      }
+
+      footer .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      @media (min-width: 768px) {
+        .hero {
+          padding: 6rem 0;
+        }
+
+        .specs-columns {
+          grid-template-columns: 1.5fr 1fr;
+        }
+
+        .contact-card {
+          grid-template-columns: 1fr 1fr;
+          align-items: start;
+        }
+      }
+
+      @media (max-width: 640px) {
+        nav ul {
+          gap: 1rem;
+        }
+
+        .top-nav {
+          flex-direction: column;
+          gap: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Estimated word count: 252 words -->
+    <header>
+      <div class="container top-nav">
+        <div class="logo">Riverside Cycle Co.</div>
+        <nav aria-label="Primary navigation">
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="container hero-content">
+          <p class="hero-note">Neighborhood crafted</p>
+          <h1>Meet the Riverside City Cruiser</h1>
+          <p class="lead">Smooth, sturdy, and ready for neighborhood rides all week long.</p>
+          <p>Built for local streets and tuned by the friends who ride them.</p>
+          <button class="btn-primary" type="button">Test-Ride Today</button>
+        </div>
+      </section>
+
+      <section id="features" class="container">
+        <h2>Why riders choose the City Cruiser</h2>
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon" role="presentation" aria-hidden="true"></div>
+            <h3>Effortless Commutes</h3>
+            <p>Low-step frame keeps every stop and start comfortable and confident.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" role="presentation" aria-hidden="true"></div>
+            <h3>Weekend Ready</h3>
+            <p>Puncture-resistant tires laugh off potholes, park paths, and boardwalks.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" role="presentation" aria-hidden="true"></div>
+            <h3>Weather Smart</h3>
+            <p>Full fenders and chain guard keep outfits clean during drizzly mornings.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" role="presentation" aria-hidden="true"></div>
+            <h3>Neighborly Service</h3>
+            <p>Free tune-ups for the first year, handled by the techs you already know.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="pricing" class="container">
+        <div class="specs">
+          <h2>Specs &amp; pricing in one quick glance</h2>
+          <div class="specs-columns">
+            <div class="spec-list">
+              <h3>City Cruiser essentials</h3>
+              <ul>
+                <li>Lightweight alloy frame with relaxed upright posture</li>
+                <li>Seven-speed Shimano drivetrain with thumb shifter</li>
+                <li>Hydraulic disc brakes for steady control on hills</li>
+                <li>Integrated lights powered by hub dynamo</li>
+              </ul>
+            </div>
+            <div class="price-box">
+              <p class="price-tag">$899</p>
+              <p class="lead" style="margin-bottom: 1.2rem">Ride-away price, no hidden shop fees.</p>
+              <div class="includes">
+                <h3>What’s included</h3>
+                <ul>
+                  <li>Lifetime frame guarantee</li>
+                  <li>Two seasonal safety checks</li>
+                  <li>Complimentary delivery within 5 miles</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="container" aria-labelledby="social-proof">
+        <h2 id="social-proof">Neighbors rolling happy</h2>
+        <div class="testimonials">
+          <figure class="testimonial">
+            <div class="avatar" role="presentation" aria-hidden="true"></div>
+            <blockquote>
+              <p>“Handles our hilly streets without breaking a sweat. Best shop vibe in town.”</p>
+            </blockquote>
+            <figcaption><strong>Marta L.</strong></figcaption>
+          </figure>
+          <figure class="testimonial">
+            <div class="avatar" role="presentation" aria-hidden="true"></div>
+            <blockquote>
+              <p>“Booked a test ride on lunch break and rode home with my Cruiser by sunset.”</p>
+            </blockquote>
+            <figcaption><strong>Dev P.</strong></figcaption>
+          </figure>
+          <figure class="testimonial">
+            <div class="avatar" role="presentation" aria-hidden="true"></div>
+            <blockquote>
+              <p>“Rain or shine, the fenders and lights keep me rolling to the café in style.”</p>
+            </blockquote>
+            <figcaption><strong>Ana G.</strong></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="contact" class="container">
+        <div class="contact-card">
+          <div>
+            <h2>Plan your visit</h2>
+            <form aria-label="Book a test ride">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" placeholder="Your full name" />
+              <label for="phone">Phone</label>
+              <input id="phone" name="phone" type="tel" placeholder="Best contact number" />
+              <label for="date">Preferred Test-Ride Date</label>
+              <input id="date" name="date" type="date" />
+              <button class="btn-primary" type="submit">Test-Ride Today</button>
+            </form>
+          </div>
+          <div class="visit-info">
+            <h3>Riverside Cycle Co.</h3>
+            <p>428 Willow Street, Westwood, OR</p>
+            <p>Open Tue–Sat: 9am – 6pm • Sun: 10am – 4pm</p>
+            <a class="secondary-btn" href="tel:+15035551234">Call now</a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="container">
+        <span>© 2024 Riverside Cycle Co.</span>
+        <span>Westwood, Oregon</span>
+      </div>
+    </footer>
+  </body>
+</html>
