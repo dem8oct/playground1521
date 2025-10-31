@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex for Devs</title>
+</head>
+<body>
+  <main>
+    <h1>Codex for Developers</h1>
+    <p>Codex accelerates development by turning natural language ideas into working code, suggesting fixes, and explaining APIs. It partners with engineers during planning, prototyping, and debugging so teams iterate faster and deliver reliable software. With context-aware guidance and automation, Codex keeps developers focused on solving problems instead of wrestling with boilerplate or obscure errors.</p>
+  </main>
+</body>
+</html>
