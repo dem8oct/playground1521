@@ -19,11 +19,19 @@ const queryClient = new QueryClient({
 })
 
 function AppContent() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, signOut } = useAuth()
   const { activeSession, loading: sessionLoading } = useSession()
   const [view, setView] = useState<
     'auth' | 'create' | 'join' | 'lobby' | 'dashboard'
   >('auth')
+
+  async function handleSignOut() {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
 
   if (authLoading || sessionLoading) {
     return (
@@ -46,7 +54,25 @@ function AppContent() {
   if (activeSession) {
     if (view === 'dashboard') {
       return (
-        <PageLayout>
+        <PageLayout
+          header={
+            <div className="flex justify-between items-center">
+              <h1 className="font-display text-2xl text-gradient-neon">
+                DASHBOARD
+              </h1>
+              <div className="flex gap-2">
+                {user && (
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                )}
+                <Button variant="secondary" size="sm" onClick={() => setView('lobby')}>
+                  Back to Lobby
+                </Button>
+              </div>
+            </div>
+          }
+        >
           <div className="text-center py-12">
             <h1 className="font-display text-4xl text-gradient-neon mb-4">
               Dashboard Coming Soon
@@ -54,9 +80,6 @@ function AppContent() {
             <p className="font-mono text-neon-green mb-6">
               Phase 5-7 implementation in progress
             </p>
-            <Button onClick={() => setView('lobby')}>
-              Back to Lobby
-            </Button>
           </div>
         </PageLayout>
       )

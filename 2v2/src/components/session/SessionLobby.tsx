@@ -9,7 +9,7 @@ interface SessionLobbyProps {
 }
 
 export default function SessionLobby({ onContinue }: SessionLobbyProps) {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const {
     activeSession,
     sessionPlayers,
@@ -79,6 +79,15 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
     }
   }
 
+  async function handleSignOut() {
+    try {
+      await signOut()
+      toast.success('Signed out')
+    } catch (error) {
+      toast.error('Failed to sign out')
+    }
+  }
+
   return (
     <PageLayout
       header={
@@ -86,11 +95,18 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
           <h1 className="font-display text-2xl text-gradient-neon">
             SESSION LOBBY
           </h1>
-          {isInitiator && (
-            <Button variant="danger" size="sm" onClick={handleEndSession}>
-              End Session
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {user && (
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            )}
+            {isInitiator && (
+              <Button variant="danger" size="sm" onClick={handleEndSession}>
+                End Session
+              </Button>
+            )}
+          </div>
         </div>
       }
     >
