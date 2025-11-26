@@ -34,7 +34,7 @@ CREATE POLICY "Users can update their own profile"
 CREATE TABLE sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   initiator_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  co_logger_player_id UUID REFERENCES session_players(id) ON DELETE SET NULL,
+  co_logger_player_id UUID,
   join_code TEXT NOT NULL UNIQUE,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'ended', 'expired')),
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -108,6 +108,13 @@ CREATE POLICY "Session initiators can remove players"
       AND s.initiator_user_id = auth.uid()
     )
   );
+
+-- Add foreign key constraint for co_logger (after session_players exists)
+ALTER TABLE sessions
+  ADD CONSTRAINT fk_co_logger_player
+  FOREIGN KEY (co_logger_player_id)
+  REFERENCES session_players(id)
+  ON DELETE SET NULL;
 
 -- ============================================================================
 -- MATCHES TABLE
