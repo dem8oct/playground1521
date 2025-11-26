@@ -43,10 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         console.log('Auth event:', event)
 
-        // Filter out INITIAL_SESSION to avoid duplicate processing
-        if (event === 'INITIAL_SESSION') return
-
         if (!mounted) return
+
+        // Don't process INITIAL_SESSION since we already handled it above
+        if (event === 'INITIAL_SESSION') return
 
         setSession(session)
         setUser(session?.user ?? null)
