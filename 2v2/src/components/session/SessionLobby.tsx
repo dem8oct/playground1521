@@ -121,14 +121,20 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
             <h2 className="font-display text-xl text-neon-green">
               Players ({playerCount}/10)
             </h2>
-            {playerCount >= 4 && (
-              <Button onClick={onContinue}>Continue to Dashboard</Button>
-            )}
+            <Button onClick={onContinue} variant={playerCount >= 4 ? 'primary' : 'ghost'}>
+              {playerCount >= 4 ? 'Continue to Dashboard' : 'View Dashboard'}
+            </Button>
           </div>
 
-          {playerCount < 4 && (
+          {playerCount < 4 && isInitiator && (
             <p className="font-mono text-sm text-neon-yellow mb-4">
-              ⚠️ Need at least 4 players to start
+              ⚠️ Need at least 4 players to start logging matches
+            </p>
+          )}
+
+          {!isInitiator && (
+            <p className="font-mono text-sm text-gray-400 mb-4">
+              ℹ️ You're viewing as a guest. The initiator will add players.
             </p>
           )}
 
