@@ -1,4 +1,5 @@
 import type { Match, TeamStats, MatchResult } from './types'
+import { supabase } from './supabase'
 
 /**
  * Determine the match result for a team based on goals scored
@@ -144,4 +145,125 @@ export function sortByLeaderboard<T extends TeamStats & { name: string }>(
     // 4. Alphabetical by name
     return a.name.localeCompare(b.name)
   })
+}
+
+/**
+ * Recalculate and persist all stats for a session to the database
+ * This should be called after any match is added, updated, or deleted
+ */
+export async function recalculateSessionStats(sessionId: string): Promise<void> {
+  try {
+    // Fetch all matches and players for this session
+    const [matchesResult, playersResult] = await Promise.all([
+      supabase
+        .from('matches')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('played_at', { ascending: true }),
+      supabase
+        .from('session_players')
+        .select('*')
+        .eq('session_id', sessionId)
+    ])
+
+    if (matchesResult.error) throw matchesResult.error
+    if (playersResult.error) throw playersResult.error
+
+    const matches = matchesResult.data || []
+    const players = playersResult.data || []
+
+    // Calculate player stats
+    const playerStatsToInsert = players.map((player) => {
+      const stats = calculatePlayerStats(player.id, matches)
+      return {
+        session_id: sessionId,
+        session_player_id: player.id,
+        ...stats
+      }
+    })
+
+    // Calculate pair stats (only for pairs that played together)
+    const pairStatsMap = new Map<string, any>()
+
+    for (const match of matches) {
+      // Team A pairs
+      if (match.team_a_player_ids.length === 2) {
+        const [p1, p2] = match.team_a_player_ids.sort()
+        const pairId = createPairId(p1, p2)
+
+        if (!pairStatsMap.has(pairId)) {
+          const player1 = players.find((p) => p.id === p1)
+          const player2 = players.find((p) => p.id === p2)
+          if (player1 && player2) {
+            const stats = calculatePairStats(p1, p2, matches)
+            const label = createPairLabel(player1.display_name, player2.display_name)
+            pairStatsMap.set(pairId, {
+              session_id: sessionId,
+              session_player_id_1: p1,
+              session_player_id_2: p2,
+              label,
+              ...stats
+            })
+          }
+        }
+      }
+
+      // Team B pairs
+      if (match.team_b_player_ids.length === 2) {
+        const [p1, p2] = match.team_b_player_ids.sort()
+        const pairId = createPairId(p1, p2)
+
+        if (!pairStatsMap.has(pairId)) {
+          const player1 = players.find((p) => p.id === p1)
+          const player2 = players.find((p) => p.id === p2)
+          if (player1 && player2) {
+            const stats = calculatePairStats(p1, p2, matches)
+            const label = createPairLabel(player1.display_name, player2.display_name)
+            pairStatsMap.set(pairId, {
+              session_id: sessionId,
+              session_player_id_1: p1,
+              session_player_id_2: p2,
+              label,
+              ...stats
+            })
+          }
+        }
+      }
+    }
+
+    const pairStatsToInsert = Array.from(pairStatsMap.values())
+
+    // Delete existing stats
+    await Promise.all([
+      supabase.from('player_stats').delete().eq('session_id', sessionId),
+      supabase.from('pair_stats').delete().eq('session_id', sessionId)
+    ])
+
+    // Insert new stats
+    const promises = []
+
+    if (playerStatsToInsert.length > 0) {
+      promises.push(
+        supabase.from('player_stats').insert(playerStatsToInsert as any)
+      )
+    }
+
+    if (pairStatsToInsert.length > 0) {
+      promises.push(
+        supabase.from('pair_stats').insert(pairStatsToInsert as any)
+      )
+    }
+
+    if (promises.length > 0) {
+      const results = await Promise.all(promises)
+      for (const result of results) {
+        if (result.error) throw result.error
+      }
+    }
+
+    console.log('Stats recalculated successfully for session:', sessionId)
+  } catch (error) {
+    console.error('Error recalculating stats:', error)
+    throw error
+  }
 }

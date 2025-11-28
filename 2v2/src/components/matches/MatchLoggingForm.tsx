@@ -176,10 +176,16 @@ export default function MatchLoggingForm({ onSuccess }: MatchLoggingFormProps) {
 
       if (insertError) throw insertError
 
+      // Recalculate stats after logging match
+      const { recalculateSessionStats } = await import('../../lib/stats')
+      await recalculateSessionStats(activeSession.id)
+
       toast.success('Match logged successfully!')
 
-      // Invalidate matches query to trigger refetch
+      // Invalidate queries to trigger refetch
       await queryClient.invalidateQueries({ queryKey: ['matches', activeSession.id] })
+      await queryClient.invalidateQueries({ queryKey: ['player-stats', activeSession.id] })
+      await queryClient.invalidateQueries({ queryKey: ['pair-stats', activeSession.id] })
 
       // Reset form
       handleReset()

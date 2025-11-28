@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useSession } from '../../contexts/SessionContext'
 import MatchLoggingForm from './MatchLoggingForm'
 import MatchHistory from './MatchHistory'
+import { PlayerLeaderboard, PairLeaderboard } from '../leaderboards'
 import toast from 'react-hot-toast'
 
 interface DashboardProps {
@@ -73,7 +74,20 @@ export default function Dashboard({ onBackToLobby }: DashboardProps) {
 
         {/* Match History */}
         <section ref={matchHistoryRef}>
+          <h2 className="font-display text-2xl text-neon-green mb-4">Match History</h2>
           <MatchHistory />
+        </section>
+
+        {/* Player Leaderboard */}
+        <section>
+          <h2 className="font-display text-2xl text-neon-green mb-4">Player Leaderboard</h2>
+          <PlayerLeaderboard />
+        </section>
+
+        {/* Pair Leaderboard */}
+        <section>
+          <h2 className="font-display text-2xl text-neon-pink mb-4">Pair Leaderboard</h2>
+          <PairLeaderboard />
         </section>
       </div>
     </PageLayout>
