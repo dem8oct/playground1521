@@ -16,6 +16,7 @@ interface SessionContextType {
   createSession: () => Promise<Session>
   joinSession: (joinCode: string) => Promise<Session>
   endSession: () => Promise<void>
+  leaveSession: () => void
   addPlayer: (displayName: string, profileId?: string) => Promise<void>
   removePlayer: (playerId: string) => Promise<void>
   setCoLogger: (playerId: string | null) => Promise<void>
@@ -32,26 +33,57 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true
+    let timeoutId: NodeJS.Timeout
 
     async function loadActiveSession() {
       try {
-        // Try to find an active session
-        const { data, error } = await supabase
-          .from('sessions')
-          .select('*')
-          .eq('status', 'active')
-          .maybeSingle()
+        // Safety timeout - if loading takes more than 5 seconds, give up
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.warn('Session loading timed out after 5 seconds')
+            setLoading(false)
+          }
+        }, 5000)
 
-        if (error) throw error
+        // Check if there's a session stored in localStorage
+        const storedSessionId = localStorage.getItem('2v2-kickoff-session')
 
-        if (mounted && data) {
-          setActiveSession(data)
-          await loadSessionPlayers(data.id)
+        if (storedSessionId) {
+          console.log('Loading stored session:', storedSessionId)
+          // Try to load the stored session
+          const { data, error } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('id', storedSessionId)
+            .eq('status', 'active')
+            .maybeSingle()
+
+          if (error) {
+            console.error('Error loading stored session:', error)
+            throw error
+          }
+
+          if (mounted && data) {
+            console.log('Stored session found and active:', data)
+            setActiveSession(data)
+            await loadSessionPlayers(data.id)
+          } else {
+            console.log('Stored session not found or not active, clearing localStorage')
+            // Session not found or no longer active, clear localStorage
+            localStorage.removeItem('2v2-kickoff-session')
+          }
+        } else {
+          console.log('No stored session ID in localStorage')
         }
       } catch (error) {
         console.error('Error loading session:', error)
+        localStorage.removeItem('2v2-kickoff-session')
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) {
+          console.log('Session loading complete, setting loading to false')
+          clearTimeout(timeoutId)
+          setLoading(false)
+        }
       }
     }
 
@@ -59,6 +91,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
+      clearTimeout(timeoutId)
     }
   }, [])
 
@@ -88,21 +121,76 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const joinCode = generateJoinCode()
       const expiresAt = getSessionExpiration()
 
-      const { data, error } = await supabase
+      console.log('Creating session with user ID:', user.id)
+      console.log('Join code:', joinCode)
+      console.log('Expires at:', expiresAt)
+
+      // Check current auth session
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      console.log('Current auth session:', authSession ? 'exists' : 'missing')
+      console.log('Access token present:', !!authSession?.access_token)
+
+      // Verify Supabase client is properly configured
+      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL)
+      console.log('Using auth token:', authSession?.access_token ? 'yes' : 'no')
+
+      const insertData = {
+        initiator_user_id: user.id,
+        join_code: joinCode,
+        expires_at: expiresAt,
+      }
+      console.log('Insert data:', insertData)
+
+      // Add timeout to prevent infinite hanging
+      console.log('Starting database insert...')
+      const insertPromise = supabase
         .from('sessions')
-        .insert({
-          initiator_user_id: user.id,
-          join_code: joinCode,
-          expires_at: expiresAt,
-        })
+        .insert(insertData)
         .select()
         .single()
+        .then(result => {
+          console.log('Database insert completed:', result)
+          return result
+        })
+        .catch(err => {
+          console.log('Database insert error:', err)
+          throw err
+        })
 
-      if (error) throw error
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => {
+          console.log('Database request timed out!')
+          reject(new Error('Database request timed out after 10 seconds'))
+        }, 10000)
+      )
 
+      const result = await Promise.race([insertPromise, timeoutPromise]) as any
+
+      console.log('Race result:', result)
+      console.log('Result type:', typeof result)
+      console.log('Result keys:', Object.keys(result || {}))
+
+      const { data, error } = result
+
+      console.log('Insert response - data:', data)
+      console.log('Insert response - error:', error)
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw new Error(`Database error: ${error.message}`)
+      }
+
+      if (!data) {
+        console.error('No data in response, full result:', result)
+        throw new Error('No session data returned')
+      }
+
+      console.log('Session created successfully:', data)
       setActiveSession(data)
+      // Store session ID in localStorage
+      localStorage.setItem('2v2-kickoff-session', data.id)
       return data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating session:', error)
       throw error
     }
@@ -121,6 +209,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!data) throw new Error('Session not found or expired')
 
       setActiveSession(data)
+      // Store session ID in localStorage
+      localStorage.setItem('2v2-kickoff-session', data.id)
       await loadSessionPlayers(data.id)
       return data
     } catch (error) {
@@ -130,12 +220,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
 
   async function endSession(): Promise<void> {
-    if (!activeSession || !user) return
+    console.log('endSession called', { activeSession, user })
+
+    if (!activeSession) {
+      throw new Error('No active session')
+    }
+
+    if (!user) {
+      throw new Error('Must be logged in to end session')
+    }
+
     if (activeSession.initiator_user_id !== user.id) {
       throw new Error('Only initiator can end session')
     }
 
     try {
+      console.log('Updating session status to ended...')
       const { error } = await supabase
         .from('sessions')
         .update({
@@ -144,14 +244,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         })
         .eq('id', activeSession.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw new Error(`Database error: ${error.message}`)
+      }
 
+      console.log('Session ended successfully')
       setActiveSession(null)
       setSessionPlayers([])
-    } catch (error) {
+      // Clear session from localStorage
+      localStorage.removeItem('2v2-kickoff-session')
+    } catch (error: any) {
       console.error('Error ending session:', error)
       throw error
     }
+  }
+
+  function leaveSession(): void {
+    // Simply clear local state and localStorage without ending the session
+    setActiveSession(null)
+    setSessionPlayers([])
+    localStorage.removeItem('2v2-kickoff-session')
   }
 
   async function addPlayer(
@@ -238,6 +351,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     createSession,
     joinSession,
     endSession,
+    leaveSession,
     addPlayer,
     removePlayer,
     setCoLogger,

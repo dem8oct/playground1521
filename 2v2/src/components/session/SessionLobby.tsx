@@ -17,6 +17,7 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
     removePlayer,
     setCoLogger,
     endSession,
+    leaveSession,
   } = useSession()
 
   const [newPlayerName, setNewPlayerName] = useState('')
@@ -72,10 +73,12 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
     if (!confirm('End this session? This cannot be undone.')) return
 
     try {
+      console.log('Attempting to end session...')
       await endSession()
       toast.success('Session ended')
-    } catch (error) {
-      toast.error('Failed to end session')
+    } catch (error: any) {
+      console.error('End session error:', error)
+      toast.error(error?.message || 'Failed to end session')
     }
   }
 
@@ -86,6 +89,12 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
     } catch (error) {
       toast.error('Failed to sign out')
     }
+  }
+
+  function handleLeaveSession() {
+    if (!confirm('Leave this session?')) return
+    leaveSession()
+    toast.success('Left session')
   }
 
   return (
@@ -101,9 +110,13 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
                 Sign Out
               </Button>
             )}
-            {isInitiator && (
+            {isInitiator ? (
               <Button variant="danger" size="sm" onClick={handleEndSession}>
                 End Session
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={handleLeaveSession}>
+                Leave Session
               </Button>
             )}
           </div>

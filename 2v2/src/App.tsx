@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SessionProvider, useSession } from './contexts/SessionContext'
@@ -20,16 +21,23 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const { user, loading: authLoading, signOut } = useAuth()
-  const { activeSession, loading: sessionLoading } = useSession()
+  const { activeSession, loading: sessionLoading, leaveSession } = useSession()
   const [view, setView] = useState<
     'auth' | 'create' | 'join' | 'lobby' | 'dashboard'
   >('auth')
 
   async function handleSignOut() {
     try {
+      console.log('Signing out and leaving session...')
+      // Leave session first (clears localStorage)
+      leaveSession()
+      // Then sign out
       await signOut()
+      setView('auth') // Reset view after sign out
+      toast.success('Signed out successfully')
     } catch (error) {
       console.error('Sign out error:', error)
+      toast.error('Failed to sign out')
     }
   }
 
@@ -88,34 +96,7 @@ function AppContent() {
     return <SessionLobby onContinue={() => setView('dashboard')} />
   }
 
-  // No active session - show auth/create/join flows
-  if (!user) {
-    return (
-      <AuthScreen
-        onGuestJoin={() => setView('join')}
-      />
-    )
-  }
-
-  // Logged in but no session
-  if (view === 'create') {
-    return (
-      <PageLayout>
-        <div className="max-w-2xl mx-auto pt-12">
-          <CreateSessionForm onSuccess={() => setView('lobby')} />
-          <div className="text-center mt-6">
-            <button
-              onClick={() => setView('auth')}
-              className="font-mono text-sm text-gray-400 hover:text-neon-green transition-colors"
-            >
-              ← Back
-            </button>
-          </div>
-        </div>
-      </PageLayout>
-    )
-  }
-
+  // Handle join view (for both guests and logged-in users)
   if (view === 'join') {
     return (
       <PageLayout>
@@ -134,9 +115,59 @@ function AppContent() {
     )
   }
 
+  // Handle create view (logged-in users only)
+  if (view === 'create') {
+    if (!user) {
+      // Redirect to auth if not logged in
+      setView('auth')
+      return null
+    }
+
+    return (
+      <PageLayout>
+        <div className="max-w-2xl mx-auto pt-12">
+          <CreateSessionForm onSuccess={() => setView('lobby')} />
+          <div className="text-center mt-6">
+            <button
+              onClick={() => setView('auth')}
+              className="font-mono text-sm text-gray-400 hover:text-neon-green transition-colors"
+            >
+              ← Back
+            </button>
+          </div>
+        </div>
+      </PageLayout>
+    )
+  }
+
+  // No active session - show auth/create/join options
+  if (!user) {
+    return (
+      <AuthScreen
+        onGuestJoin={() => {
+          console.log('onGuestJoin callback triggered, setting view to join')
+          setView('join')
+        }}
+      />
+    )
+  }
+
   // Default: show options
   return (
-    <PageLayout>
+    <PageLayout
+      header={
+        <div className="flex justify-between items-center">
+          <h1 className="font-display text-2xl text-gradient-neon">
+            2V2 KICK OFF NIGHT
+          </h1>
+          {user && (
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          )}
+        </div>
+      }
+    >
       <div className="max-w-2xl mx-auto pt-12 text-center">
         <h1 className="font-display text-5xl text-gradient-neon mb-8">
           What would you like to do?

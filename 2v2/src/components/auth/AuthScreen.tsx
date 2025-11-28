@@ -78,7 +78,10 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
               variant="secondary"
               size="lg"
               className="w-full"
-              onClick={onGuestJoin}
+              onClick={() => {
+                console.log('Join as Guest clicked', { onGuestJoin })
+                onGuestJoin?.()
+              }}
             >
               Join as Guest
             </Button>

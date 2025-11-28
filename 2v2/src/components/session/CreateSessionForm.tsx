@@ -14,13 +14,19 @@ export default function CreateSessionForm({ onSuccess }: CreateSessionFormProps)
   async function handleCreate() {
     setLoading(true)
     try {
+      console.log('CreateSessionForm: Starting session creation...')
       const session = await createSession()
+      console.log('CreateSessionForm: Session created successfully:', session)
       toast.success(`Session created! Join code: ${session.join_code}`)
+      console.log('CreateSessionForm: Calling onSuccess callback')
       onSuccess?.()
-    } catch (error) {
-      console.error('Create session error:', error)
-      toast.error('Failed to create session')
+      console.log('CreateSessionForm: onSuccess callback completed')
+    } catch (error: any) {
+      console.error('CreateSessionForm: Create session error:', error)
+      const errorMessage = error?.message || 'Failed to create session'
+      toast.error(errorMessage)
     } finally {
+      console.log('CreateSessionForm: Setting loading to false')
       setLoading(false)
     }
   }

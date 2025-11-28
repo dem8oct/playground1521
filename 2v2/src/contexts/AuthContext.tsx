@@ -23,17 +23,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true
+    let timeoutId: NodeJS.Timeout
+
+    // Safety timeout for auth loading
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn('Auth loading timed out after 5 seconds')
+        setLoading(false)
+      }
+    }, 5000)
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
 
+      console.log('Initial session check:', session ? 'logged in' : 'not logged in')
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
         loadProfile(session.user.id)
       } else {
+        console.log('No session, setting loading to false')
+        clearTimeout(timeoutId)
+        setLoading(false)
+      }
+    }).catch(err => {
+      console.error('Error getting initial session:', err)
+      if (mounted) {
+        clearTimeout(timeoutId)
         setLoading(false)
       }
     })
@@ -62,12 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
+      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
 
   async function loadProfile(userId: string) {
     try {
+      console.log('Loading profile for user:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -79,10 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error
       }
 
+      console.log('Profile loaded:', data)
       setProfile(data)
     } catch (error) {
       console.error('Failed to load profile:', error)
     } finally {
+      console.log('Profile loading complete, setting loading to false')
       setLoading(false)
     }
   }
