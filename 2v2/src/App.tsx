@@ -64,11 +64,11 @@ function AppContent() {
       return (
         <PageLayout
           header={
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4 flex-wrap">
               <h1 className="font-display text-2xl text-gradient-neon">
                 DASHBOARD
               </h1>
-              <div className="flex gap-2">
+              <div className="flex gap-3 items-center flex-wrap">
                 {user && (
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     Sign Out
@@ -156,7 +156,7 @@ function AppContent() {
   return (
     <PageLayout
       header={
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-4 flex-wrap">
           <h1 className="font-display text-2xl text-gradient-neon">
             2V2 KICK OFF NIGHT
           </h1>

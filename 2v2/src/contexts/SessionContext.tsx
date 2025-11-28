@@ -198,16 +198,38 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   async function joinSession(joinCode: string): Promise<Session> {
     try {
-      const { data, error } = await supabase
+      console.log('Attempting to join session with code:', joinCode)
+
+      // Add timeout protection to prevent infinite hanging
+      const queryPromise = supabase
         .from('sessions')
         .select('*')
         .eq('join_code', joinCode.toUpperCase())
         .eq('status', 'active')
         .maybeSingle()
+        .then(result => {
+          console.log('Join query completed:', result)
+          return result
+        })
 
-      if (error) throw error
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => {
+          console.log('Join session query timed out!')
+          reject(new Error('Request timed out after 10 seconds. Please check your connection.'))
+        }, 10000)
+      )
+
+      const result = await Promise.race([queryPromise, timeoutPromise]) as any
+      const { data, error } = result
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+
       if (!data) throw new Error('Session not found or expired')
 
+      console.log('Successfully joined session:', data)
       setActiveSession(data)
       // Store session ID in localStorage
       localStorage.setItem('2v2-kickoff-session', data.id)
