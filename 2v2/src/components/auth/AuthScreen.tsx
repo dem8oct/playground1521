@@ -69,10 +69,10 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
           <Card variant="neon-pink" className="text-center">
             <div className="text-6xl mb-4">👥</div>
             <h2 className="font-display text-2xl text-neon-pink mb-3">
-              Join Session
+              Join as Guest
             </h2>
             <p className="font-mono text-sm text-gray-300 mb-6">
-              Enter a join code to view matches and leaderboards
+              Have a join code? View the session without signing in
             </p>
             <Button
               variant="secondary"
@@ -83,7 +83,7 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
                 onGuestJoin?.()
               }}
             >
-              Join as Guest
+              Enter Join Code
             </Button>
           </Card>
         </div>

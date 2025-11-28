@@ -153,7 +153,7 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
               Players ({playerCount}/10)
             </h2>
             <Button onClick={onContinue} variant={playerCount >= 4 ? 'primary' : 'ghost'}>
-              {playerCount >= 4 ? 'Continue to Dashboard' : 'View Dashboard'}
+              {playerCount >= 4 ? 'Start Session' : 'View Dashboard'}
             </Button>
           </div>
 
@@ -166,6 +166,12 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
           {!isInitiator && (
             <p className="font-mono text-sm text-gray-400 mb-4">
               ℹ️ You're viewing as a guest. The initiator will add players.
+            </p>
+          )}
+
+          {isInitiator && sessionPlayers.some((p) => !p.profile_id) && (
+            <p className="font-mono text-sm text-neon-blue mb-4">
+              💡 Only registered players (marked "Linked") can be assigned as co-logger
             </p>
           )}
 
@@ -215,15 +221,17 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
                 </div>
                 {isInitiator && (
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleSetCoLogger(player.id)}
-                    >
-                      {player.id === activeSession.co_logger_player_id
-                        ? 'Remove Co-Logger'
-                        : 'Make Co-Logger'}
-                    </Button>
+                    {player.profile_id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSetCoLogger(player.id)}
+                      >
+                        {player.id === activeSession.co_logger_player_id
+                          ? 'Remove Co-Logger'
+                          : 'Make Co-Logger'}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="danger"
