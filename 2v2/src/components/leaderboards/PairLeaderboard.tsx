@@ -1,4 +1,4 @@
-import { useQuery } from '@tantml:invoke>
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../contexts/SessionContext'
 import { Card } from '../ui'
