@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSession } from '../../contexts/SessionContext'
-import { PageLayout, Card, Button, Input, Badge, Select } from '../ui'
+import { PageLayout, Card, Button, Input, Badge } from '../ui'
 import toast from 'react-hot-toast'
 
 interface SessionLobbyProps {
@@ -61,6 +61,8 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
   }
 
   async function handleSetCoLogger(playerId: string) {
+    if (!activeSession) return
+
     try {
       await setCoLogger(playerId === activeSession.co_logger_player_id ? null : playerId)
       toast.success('Co-logger updated')

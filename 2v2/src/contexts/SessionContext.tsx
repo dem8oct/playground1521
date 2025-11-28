@@ -145,7 +145,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       console.log('Starting database insert...')
       const insertPromise = supabase
         .from('sessions')
-        .insert(insertData)
+        .insert(insertData as any)
         .select()
         .single()
         .then(result => {
@@ -263,7 +263,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         .update({
           status: 'ended',
           ended_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', activeSession.id)
 
       if (error) {
@@ -300,7 +300,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         session_id: activeSession.id,
         display_name: displayName,
         profile_id: profileId || null,
-      })
+      } as any)
 
       if (error) throw error
 
@@ -335,7 +335,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase
         .from('sessions')
-        .update({ co_logger_player_id: playerId })
+        .update({ co_logger_player_id: playerId } as any)
         .eq('id', activeSession.id)
 
       if (error) throw error

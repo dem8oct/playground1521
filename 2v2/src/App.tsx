@@ -8,6 +8,7 @@ import AuthScreen from './components/auth/AuthScreen'
 import CreateSessionForm from './components/session/CreateSessionForm'
 import JoinSessionForm from './components/session/JoinSessionForm'
 import SessionLobby from './components/session/SessionLobby'
+import { Dashboard } from './components/matches'
 import { PageLayout, Button } from './components/ui'
 
 const queryClient = new QueryClient({
@@ -61,36 +62,7 @@ function AppContent() {
   // If there's an active session, show lobby or dashboard
   if (activeSession) {
     if (view === 'dashboard') {
-      return (
-        <PageLayout
-          header={
-            <div className="flex justify-between items-center gap-4 flex-wrap">
-              <h1 className="font-display text-2xl text-gradient-neon">
-                DASHBOARD
-              </h1>
-              <div className="flex gap-3 items-center flex-wrap">
-                {user && (
-                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                    Sign Out
-                  </Button>
-                )}
-                <Button variant="secondary" size="sm" onClick={() => setView('lobby')}>
-                  Back to Lobby
-                </Button>
-              </div>
-            </div>
-          }
-        >
-          <div className="text-center py-12">
-            <h1 className="font-display text-4xl text-gradient-neon mb-4">
-              Dashboard Coming Soon
-            </h1>
-            <p className="font-mono text-neon-green mb-6">
-              Phase 5-7 implementation in progress
-            </p>
-          </div>
-        </PageLayout>
-      )
+      return <Dashboard onBackToLobby={() => setView('lobby')} />
     }
 
     return <SessionLobby onContinue={() => setView('dashboard')} />

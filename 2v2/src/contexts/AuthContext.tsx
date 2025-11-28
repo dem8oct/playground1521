@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName })
+        .update({ display_name: displayName } as any)
         .eq('id', user.id)
 
       if (error) throw error
