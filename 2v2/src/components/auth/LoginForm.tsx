@@ -1,62 +1,33 @@
 import { useState, FormEvent } from 'react'
 import { Button, Input, Card } from '../ui'
 import toast from 'react-hot-toast'
+import { login } from '../../lib/auth/auth'
 
 interface LoginFormProps {
   onSuccess?: () => void
+  onShowSignup?: () => void
 }
 
-export default function LoginForm({ onSuccess }: LoginFormProps) {
-  const [email, setEmail] = useState('')
+export default function LoginForm({ onSuccess, onShowSignup }: LoginFormProps) {
+  const [identifier, setIdentifier] = useState('') // username or email
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const { supabase } = await import('../../lib/supabase')
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      })
-
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      setSubmitted(true)
-      toast.success('Magic link sent! Check your email.')
+      await login(identifier, password)
+      toast.success('Logged in successfully!')
       onSuccess?.()
     } catch (error) {
       console.error('Login error:', error)
-      toast.error('Failed to send magic link')
+      const message = error instanceof Error ? error.message : 'Failed to login'
+      toast.error(message)
     } finally {
       setLoading(false)
     }
-  }
-
-  if (submitted) {
-    return (
-      <Card className="max-w-md mx-auto">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📧</div>
-          <h2 className="font-display text-2xl text-neon-green mb-2">
-            Check Your Email
-          </h2>
-          <p className="font-mono text-sm text-gray-400 mb-6">
-            We sent a magic link to <span className="text-white">{email}</span>
-          </p>
-          <p className="font-mono text-xs text-gray-500">
-            Click the link in the email to sign in. It may take a minute to arrive.
-          </p>
-        </div>
-      </Card>
-    )
   }
 
   return (
@@ -64,11 +35,20 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       <h2 className="font-display text-2xl text-neon-green mb-6">Sign In</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          type="email"
-          label="Email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          label="Username or Email"
+          placeholder="username or email@example.com"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          required
+          disabled={loading}
+        />
+        <Input
+          type="password"
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
           disabled={loading}
         />
@@ -76,13 +56,22 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           type="submit"
           variant="primary"
           className="w-full"
-          disabled={loading || !email}
+          disabled={loading || !identifier || !password}
         >
-          {loading ? 'Sending...' : 'Send Magic Link'}
+          {loading ? 'Signing in...' : 'Sign In'}
         </Button>
-        <p className="text-xs text-gray-500 font-mono text-center">
-          No password needed. We'll email you a link to sign in.
-        </p>
+        <div className="text-center">
+          <p className="text-xs text-gray-500 font-mono">
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={onShowSignup}
+              className="text-neon-green hover:underline"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
       </form>
     </Card>
   )

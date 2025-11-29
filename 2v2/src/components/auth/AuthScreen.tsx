@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { PageLayout, Button, Card } from '../ui'
 import LoginForm from './LoginForm'
+import SignupForm from './SignupForm'
 
 interface AuthScreenProps {
   onGuestJoin?: () => void
 }
 
-export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
-  const [showLogin, setShowLogin] = useState(false)
+type AuthMode = 'welcome' | 'login' | 'signup'
 
-  if (showLogin) {
+export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
+  const [mode, setMode] = useState<AuthMode>('welcome')
+
+  if (mode === 'login') {
     return (
       <PageLayout>
         <div className="max-w-2xl mx-auto pt-12">
@@ -21,10 +24,40 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
               Track your EA SPORTS FC matches
             </p>
           </div>
-          <LoginForm />
+          <LoginForm
+            onShowSignup={() => setMode('signup')}
+          />
           <div className="text-center mt-6">
             <button
-              onClick={() => setShowLogin(false)}
+              onClick={() => setMode('welcome')}
+              className="font-mono text-sm text-gray-400 hover:text-neon-green transition-colors"
+            >
+              ← Back to options
+            </button>
+          </div>
+        </div>
+      </PageLayout>
+    )
+  }
+
+  if (mode === 'signup') {
+    return (
+      <PageLayout>
+        <div className="max-w-2xl mx-auto pt-12">
+          <div className="text-center mb-8">
+            <h1 className="font-display text-5xl md:text-6xl text-gradient-neon mb-4">
+              2V2 KICK OFF NIGHT
+            </h1>
+            <p className="font-mono text-neon-green">
+              Track your EA SPORTS FC matches
+            </p>
+          </div>
+          <SignupForm
+            onShowLogin={() => setMode('login')}
+          />
+          <div className="text-center mt-6">
+            <button
+              onClick={() => setMode('welcome')}
               className="font-mono text-sm text-gray-400 hover:text-neon-green transition-colors"
             >
               ← Back to options
@@ -60,7 +93,7 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
               variant="primary"
               size="lg"
               className="w-full"
-              onClick={() => setShowLogin(true)}
+              onClick={() => setMode('login')}
             >
               Sign In to Create
             </Button>
@@ -90,9 +123,17 @@ export default function AuthScreen({ onGuestJoin }: AuthScreenProps) {
 
         <div className="mt-12 text-center">
           <p className="font-mono text-sm text-gray-400">
+            New here?{' '}
+            <button
+              onClick={() => setMode('signup')}
+              className="text-neon-pink hover:underline"
+            >
+              Create an account
+            </button>
+            {' · '}
             Already have an account?{' '}
             <button
-              onClick={() => setShowLogin(true)}
+              onClick={() => setMode('login')}
               className="text-neon-green hover:underline"
             >
               Sign in
