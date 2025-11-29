@@ -10,6 +10,7 @@ import JoinSessionForm from './components/session/JoinSessionForm'
 import SessionLobby from './components/session/SessionLobby'
 import { Dashboard } from './components/matches'
 import { PageLayout, Button } from './components/ui'
+import { GroupsList, GroupDashboard, UserInvites } from './components/groups'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,8 +25,9 @@ function AppContent() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { activeSession, loading: sessionLoading, leaveSession } = useSession()
   const [view, setView] = useState<
-    'auth' | 'create' | 'join' | 'lobby' | 'dashboard'
+    'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail'
   >('auth')
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
 
   async function handleSignOut() {
     try {
@@ -112,6 +114,73 @@ function AppContent() {
     )
   }
 
+  // Handle groups view
+  if (view === 'groups') {
+    if (!user) {
+      setView('auth')
+      return null
+    }
+    return (
+      <PageLayout
+        header={
+          <div className="flex justify-between items-center gap-4 flex-wrap">
+            <h1 className="font-display text-2xl text-gradient-neon">
+              MY GROUPS
+            </h1>
+            <div className="flex gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setView('auth')}>
+                Back
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <GroupsList />
+      </PageLayout>
+    )
+  }
+
+  // Handle invites view
+  if (view === 'invites') {
+    if (!user) {
+      setView('auth')
+      return null
+    }
+    return (
+      <PageLayout
+        header={
+          <div className="flex justify-between items-center gap-4 flex-wrap">
+            <h1 className="font-display text-2xl text-gradient-neon">
+              GROUP INVITES
+            </h1>
+            <div className="flex gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setView('auth')}>
+                Back
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <UserInvites />
+      </PageLayout>
+    )
+  }
+
+  // Handle group detail view
+  if (view === 'group-detail' && selectedGroupId) {
+    if (!user) {
+      setView('auth')
+      return null
+    }
+    return <GroupDashboard groupId={selectedGroupId} />
+  }
+
   // No active session - show auth/create/join options
   if (!user) {
     return (
@@ -158,6 +227,20 @@ function AppContent() {
             onClick={() => setView('join')}
           >
             Join Existing Session
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => setView('groups')}
+          >
+            My Groups
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => setView('invites')}
+          >
+            Group Invites
           </Button>
         </div>
       </div>
