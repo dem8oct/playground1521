@@ -54,6 +54,30 @@ Successfully migrated database to support:
 
 ---
 
+## Post-Migration Fixes
+
+### ✅ Fixed: handle_new_user() Schema Issue
+**Issue:** Function couldn't find `profiles` table (schema resolution)
+**Fix:** Updated function to use `public.profiles` explicitly
+**Date:** 2025-11-29
+
+```sql
+-- Fixed version uses explicit schema
+INSERT INTO public.profiles (id, display_name, username)
+VALUES (...);
+```
+
+**Also recreated trigger:**
+```sql
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();
+```
+
+---
+
 ## Post-Migration Tasks
 
 ### Completed
@@ -61,11 +85,14 @@ Successfully migrated database to support:
 - ✅ Tables created
 - ✅ Functions and triggers active
 - ✅ RLS policies enabled
+- ✅ Set system admin
+- ✅ Updated Supabase Auth settings (email/password enabled)
+- ✅ **Phase 2: Authentication system implemented and tested**
+  - Signup with username/email/password ✅
+  - Login with username OR email ✅
+  - Profile auto-creation ✅
 
 ### Pending
-- [ ] Set system admin: `UPDATE profiles SET is_admin = true WHERE id = 'user-id';`
-- [ ] Update Supabase Auth settings (disable magic link, enable email/password)
-- [ ] Implement authentication UI (signup/login with username)
 - [ ] Implement Groups API
 - [ ] Build Groups UI
 
