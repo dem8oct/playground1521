@@ -15,7 +15,11 @@ interface Group {
   joinedAt: string
 }
 
-export function GroupsList() {
+interface GroupsListProps {
+  onGroupClick?: (groupId: string) => void
+}
+
+export function GroupsList({ onGroupClick }: GroupsListProps = {}) {
   const { user } = useAuth()
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,7 +99,9 @@ export function GroupsList() {
               variant={group.userRole === 'admin' ? 'neon-green' : 'default'}
               className="cursor-pointer hover:scale-105 transition-transform"
               onClick={() => {
-                window.location.href = `/groups/${group.id}`
+                if (onGroupClick) {
+                  onGroupClick(group.id)
+                }
               }}
             >
               <div className="space-y-3">

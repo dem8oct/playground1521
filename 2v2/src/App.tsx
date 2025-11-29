@@ -138,7 +138,12 @@ function AppContent() {
           </div>
         }
       >
-        <GroupsList />
+        <GroupsList
+          onGroupClick={(groupId) => {
+            setSelectedGroupId(groupId)
+            setView('group-detail')
+          }}
+        />
       </PageLayout>
     )
   }
@@ -178,7 +183,12 @@ function AppContent() {
       setView('auth')
       return null
     }
-    return <GroupDashboard groupId={selectedGroupId} />
+    return (
+      <GroupDashboard
+        groupId={selectedGroupId}
+        onBack={() => setView('groups')}
+      />
+    )
   }
 
   // No active session - show auth/create/join options

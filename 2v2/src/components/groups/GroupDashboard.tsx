@@ -30,11 +30,12 @@ interface GroupDetails {
 
 interface GroupDashboardProps {
   groupId: string
+  onBack?: () => void
 }
 
 type TabType = 'overview' | 'members' | 'leaderboards' | 'settings'
 
-export function GroupDashboard({ groupId }: GroupDashboardProps) {
+export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
   const { user } = useAuth()
   const [group, setGroup] = useState<GroupDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -101,7 +102,9 @@ export function GroupDashboard({ groupId }: GroupDashboardProps) {
 
     try {
       await deleteGroup(groupId)
-      window.location.href = '/groups'
+      if (onBack) {
+        onBack()
+      }
     } catch (err: any) {
       console.error('Error deleting group:', err)
       alert(err.message || 'Failed to delete group')
@@ -124,7 +127,7 @@ export function GroupDashboard({ groupId }: GroupDashboardProps) {
         <Card>
           <div className="text-center py-12">
             <p className="text-red-400">{error || 'Group not found'}</p>
-            <Button onClick={() => (window.location.href = '/groups')} className="mt-4">
+            <Button onClick={onBack} className="mt-4">
               Back to Groups
             </Button>
           </div>
@@ -149,7 +152,7 @@ export function GroupDashboard({ groupId }: GroupDashboardProps) {
                   <p className="text-gray-400 mt-2">{group.description}</p>
                 )}
               </div>
-              <Button onClick={() => (window.location.href = '/groups')} variant="ghost">
+              <Button onClick={onBack} variant="ghost">
                 Back to Groups
               </Button>
             </div>

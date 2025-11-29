@@ -87,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadProfile(userId: string) {
     try {
-      console.log('Loading profile for user:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -99,12 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error
       }
 
-      console.log('Profile loaded:', data)
       setProfile(data)
     } catch (error) {
       console.error('Failed to load profile:', error)
     } finally {
-      console.log('Profile loading complete, setting loading to false')
       setLoading(false)
     }
   }
