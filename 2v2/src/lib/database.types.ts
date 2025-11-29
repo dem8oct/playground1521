@@ -19,6 +19,8 @@ export interface Database {
           created_at: string
           expires_at: string
           ended_at: string | null
+          group_id: string | null
+          session_type: 'adhoc' | 'group'
         }
         Insert: {
           id?: string
@@ -29,6 +31,8 @@ export interface Database {
           created_at?: string
           expires_at: string
           ended_at?: string | null
+          group_id?: string | null
+          session_type?: 'adhoc' | 'group'
         }
         Update: {
           id?: string
@@ -39,23 +43,118 @@ export interface Database {
           created_at?: string
           expires_at?: string
           ended_at?: string | null
+          group_id?: string | null
+          session_type?: 'adhoc' | 'group'
         }
       }
       profiles: {
         Row: {
           id: string
           display_name: string
+          username: string
+          is_admin: boolean
+          avatar_url: string | null
+          bio: string | null
           created_at: string
         }
         Insert: {
           id: string
           display_name: string
+          username: string
+          is_admin?: boolean
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           display_name?: string
+          username?: string
+          is_admin?: boolean
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+        }
+      }
+      groups: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          created_by_user_id: string
+          avatar_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          created_by_user_id: string
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          created_by_user_id?: string
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      group_members: {
+        Row: {
+          id: string
+          group_id: string
+          user_id: string
+          role: 'admin' | 'member'
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          group_id: string
+          user_id: string
+          role?: 'admin' | 'member'
+          joined_at?: string
+        }
+        Update: {
+          id?: string
+          group_id?: string
+          user_id?: string
+          role?: 'admin' | 'member'
+          joined_at?: string
+        }
+      }
+      group_invites: {
+        Row: {
+          id: string
+          group_id: string
+          inviter_user_id: string
+          invitee_user_id: string
+          status: 'pending' | 'accepted' | 'declined'
+          created_at: string
+          responded_at: string | null
+        }
+        Insert: {
+          id?: string
+          group_id: string
+          inviter_user_id: string
+          invitee_user_id: string
+          status?: 'pending' | 'accepted' | 'declined'
+          created_at?: string
+          responded_at?: string | null
+        }
+        Update: {
+          id?: string
+          group_id?: string
+          inviter_user_id?: string
+          invitee_user_id?: string
+          status?: 'pending' | 'accepted' | 'declined'
+          created_at?: string
+          responded_at?: string | null
         }
       }
       session_players: {
@@ -212,6 +311,22 @@ export interface Database {
           gd?: number
           pts?: number
         }
+      }
+    }
+    Functions: {
+      cleanup_expired_adhoc_sessions: {
+        Args: Record<string, never>
+        Returns: {
+          deleted_count: number
+        }[]
+      }
+      get_user_email_by_profile_id: {
+        Args: {
+          profile_id: string
+        }
+        Returns: {
+          email: string
+        }[]
       }
     }
   }
