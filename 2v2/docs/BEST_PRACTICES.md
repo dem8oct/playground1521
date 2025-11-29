@@ -29,7 +29,50 @@ BEST_PRACTICES.md        - This file
 
 ---
 
-### 2. Clear Naming Conventions
+### 2. Token-Efficient Documentation Creation
+
+**IMPORTANT:** When creating long documentation files (>500 lines or detailed implementation plans):
+
+**DON'T:**
+- ❌ Write entire file content in chat (wastes thousands of tokens)
+- ❌ Generate full documentation in a single tool call
+
+**DO:**
+1. ✅ Use Write tool to create **empty file with just a header**
+2. ✅ Tell user to open the file in their editor
+3. ✅ Discuss structure/outline in chat (keep it brief - bullet points)
+4. ✅ User fills in content themselves OR Claude adds sections incrementally during implementation
+
+**Example:**
+```markdown
+# Phase 7: Groups and Social Features
+
+[User opens this file and fills in details]
+
+OR
+
+[Claude adds sections one-by-one as we implement each part]
+```
+
+**Token Savings:**
+- Full file in chat: ~18,000 tokens
+- Empty file + outline: ~500 tokens
+- **Savings: 97%** 🎉
+
+**When to use this approach:**
+- Implementation plans (PHASE*.md files)
+- API documentation
+- Detailed design specs
+- Migration guides
+
+**When it's OK to write full content:**
+- Short files (<200 lines)
+- Code files that need to be complete to work
+- Configuration files
+
+---
+
+### 3. Clear Naming Conventions
 
 Use prefixes to indicate document type:
 

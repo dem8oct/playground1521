@@ -830,28 +830,40 @@ CREATE TABLE activity_feed (
 
 ---
 
-### Open Questions (Need User Input)
+### ✅ Design Decisions (User Confirmed: 2025-11-29)
 
 1. **Group Privacy:**
-   - Should groups be public (anyone can find/join) or only invite-based?
-   - Or both options with a toggle?
+   - ✅ **DECISION: Invite-only groups**
+   - Groups are private by default
+   - Only group admins can invite new members
+   - No public discovery or join codes for groups
 
 2. **Session Ownership:**
-   - Can group sessions be deleted or are they permanent?
-   - Who can delete: creator only, or any admin?
+   - ✅ **DECISION: Group sessions are permanent, tied to group lifecycle**
+   - Group sessions cannot be individually deleted
+   - Sessions are deleted when the group is deleted (CASCADE)
+   - Only group admins can delete the group
+   - **REJECTED:** "Graduate" feature (converting ad-hoc to group sessions)
 
 3. **Leaderboards Scope:**
-   - Global leaderboards (all users across all sessions)?
-   - Just group-specific leaderboards?
-   - Both?
+   - ✅ **DECISION: Group-specific leaderboards for members, global for admins only**
+   - Regular users see only their group leaderboards
+   - Admin role can access global leaderboards (all users across all sessions)
+   - TODO: Define admin role permissions and access controls
 
 4. **Pairs Persistence:**
-   - Should pairs be "official" teams users can form?
-   - Or just calculated from match history (current approach)?
+   - ✅ **DECISION: Player duos (not club teams)**
+   - Pairs are lightweight partnerships between two players (e.g., "John & Adam")
+   - Stats-focused: track win rates, goals, matches played together
+   - Optional: Allow pairs to set a team name (e.g., "The Dream Team")
+   - NOT implementing full club teams with rosters, logos, etc.
 
 5. **Data Retention:**
-   - Can users delete old sessions?
-   - How long until ad-hoc sessions auto-delete?
+   - ✅ **DECISION: 10-hour auto-delete for ad-hoc, cascade delete for groups**
+   - Ad-hoc sessions auto-delete after 10 hours
+   - Group sessions persist forever (until group is deleted)
+   - When a group is deleted, all its sessions are deleted (CASCADE)
+   - No manual deletion of individual sessions
 
 ---
 
