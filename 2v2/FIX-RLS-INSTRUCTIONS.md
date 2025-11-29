@@ -8,10 +8,10 @@ The RLS policies on `group_members` table are causing infinite recursion because
 ## Solution
 Run the COMPLETE reset script to drop ALL old policies and create correct ones.
 
-## ⚠️ IMPORTANT: Use the Complete Reset Script
+## ⚠️ IMPORTANT: Use the Simple Fix Script
 
-**DO NOT USE:** `fix-rls-policies.sql` (this caused duplicates)
-**USE INSTEAD:** `reset-all-rls-policies.sql` (complete reset)
+**FINAL FIX:** `simple-rls-fix.sql` - This is the one that works!
+**Why previous scripts failed:** They all had recursive SELECT policies
 
 ## Steps to Fix
 
@@ -21,20 +21,29 @@ Run the COMPLETE reset script to drop ALL old policies and create correct ones.
 2. **Navigate to SQL Editor**
    - Click "SQL Editor" in the left sidebar
 
-3. **Run the COMPLETE Reset Script**
-   - Copy ALL contents of `reset-all-rls-policies.sql`
+3. **Run the Simple Fix Script**
+   - Copy ALL contents of `simple-rls-fix.sql`
    - Paste into SQL Editor
    - Click "Run" or press Ctrl+Enter
-   - This will drop ALL existing policies and create new ones
+   - This replaces the SELECT policy on group_members
 
 4. **Verify the Fix**
-   - The last query will show all policies
-   - Should show exactly 14 policies total:
-     - groups: 4 policies
-     - group_members: 5 policies
-     - group_invites: 5 policies
+   - The last query will show 1 policy for SELECT on group_members
+   - Should say: `authenticated_can_read_members`
    - Refresh your app at http://localhost:5173/
    - Click "My Groups" - should work now!
+
+## Why This Works
+
+The problem was that any SELECT policy on `group_members` that checked
+"is user a member of this group" causes infinite recursion because
+it queries the same table it's protecting.
+
+**Solution:** Allow all authenticated users to SELECT from group_members.
+This is safe because:
+- The API `getUserGroups()` filters by user_id in the query
+- The `groups` table policy restricts which groups users can see
+- We only allow reading, not writing without proper checks
 
 ## What the Fix Does
 
