@@ -6,7 +6,12 @@ The RLS policies on `group_members` table are causing infinite recursion because
 **Error:** `infinite recursion detected in policy for relation "group_members"`
 
 ## Solution
-Run the SQL script to fix the policies with non-recursive queries.
+Run the COMPLETE reset script to drop ALL old policies and create correct ones.
+
+## ⚠️ IMPORTANT: Use the Complete Reset Script
+
+**DO NOT USE:** `fix-rls-policies.sql` (this caused duplicates)
+**USE INSTEAD:** `reset-all-rls-policies.sql` (complete reset)
 
 ## Steps to Fix
 
@@ -16,14 +21,18 @@ Run the SQL script to fix the policies with non-recursive queries.
 2. **Navigate to SQL Editor**
    - Click "SQL Editor" in the left sidebar
 
-3. **Run the Fix Script**
-   - Copy the contents of `fix-rls-policies.sql`
+3. **Run the COMPLETE Reset Script**
+   - Copy ALL contents of `reset-all-rls-policies.sql`
    - Paste into SQL Editor
    - Click "Run" or press Ctrl+Enter
+   - This will drop ALL existing policies and create new ones
 
 4. **Verify the Fix**
-   - The last query in the script will show all policies
-   - Verify no errors appear
+   - The last query will show all policies
+   - Should show exactly 14 policies total:
+     - groups: 4 policies
+     - group_members: 5 policies
+     - group_invites: 5 policies
    - Refresh your app at http://localhost:5173/
    - Click "My Groups" - should work now!
 
