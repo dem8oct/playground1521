@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { PageLayout, Button } from '../ui'
+import { PageLayout, Button, Tabs } from '../ui'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSession } from '../../contexts/SessionContext'
 import MatchLoggingForm from './MatchLoggingForm'
@@ -14,7 +13,6 @@ interface DashboardProps {
 export default function Dashboard({ onBackToLobby }: DashboardProps) {
   const { user, signOut } = useAuth()
   const { sessionPlayers } = useSession()
-  const matchHistoryRef = useRef<HTMLElement>(null)
 
   async function handleSignOut() {
     try {
@@ -23,14 +21,6 @@ export default function Dashboard({ onBackToLobby }: DashboardProps) {
     } catch (error) {
       toast.error('Failed to sign out')
     }
-  }
-
-  function scrollToMatchHistory() {
-    // Scroll to match history section after successful match submission
-    // Delay to allow React Query to refetch and render new data
-    setTimeout(() => {
-      matchHistoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 300)
   }
 
   const canLogMatches = sessionPlayers.length >= 4
@@ -55,40 +45,65 @@ export default function Dashboard({ onBackToLobby }: DashboardProps) {
         </div>
       }
     >
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto">
         {/* Warning if not enough players */}
         {!canLogMatches && (
-          <div className="bg-yellow-500/10 border-4 border-yellow-500/50 p-4">
+          <div className="bg-yellow-500/10 border-4 border-yellow-500/50 p-4 mb-6">
             <p className="font-mono text-yellow-500 text-center">
               ⚠️ Need at least 4 players to log matches. Add more players in the lobby.
             </p>
           </div>
         )}
 
-        {/* Match Logging Form */}
-        {canLogMatches && (
-          <section>
-            <MatchLoggingForm onSuccess={scrollToMatchHistory} />
-          </section>
-        )}
+        {/* Tabbed Interface */}
+        <Tabs defaultValue={canLogMatches ? "log" : "history"}>
+          <Tabs.List>
+            {canLogMatches && (
+              <Tabs.Trigger value="log">
+                ⚽ LOG MATCH
+              </Tabs.Trigger>
+            )}
+            <Tabs.Trigger value="history">
+              📊 HISTORY
+            </Tabs.Trigger>
+            <Tabs.Trigger value="leaderboards">
+              🏆 LEADERBOARDS
+            </Tabs.Trigger>
+          </Tabs.List>
 
-        {/* Match History */}
-        <section ref={matchHistoryRef}>
-          <h2 className="font-display text-2xl text-neon-green mb-4">Match History</h2>
-          <MatchHistory />
-        </section>
+          {/* Log Match Tab */}
+          {canLogMatches && (
+            <Tabs.Content value="log">
+              <MatchLoggingForm />
+            </Tabs.Content>
+          )}
 
-        {/* Player Leaderboard */}
-        <section>
-          <h2 className="font-display text-2xl text-neon-green mb-4">Player Leaderboard</h2>
-          <PlayerLeaderboard />
-        </section>
+          {/* History Tab */}
+          <Tabs.Content value="history">
+            <MatchHistory />
+          </Tabs.Content>
 
-        {/* Pair Leaderboard */}
-        <section>
-          <h2 className="font-display text-2xl text-neon-pink mb-4">Pair Leaderboard</h2>
-          <PairLeaderboard />
-        </section>
+          {/* Leaderboards Tab */}
+          <Tabs.Content value="leaderboards">
+            <div className="space-y-8">
+              {/* Player Leaderboard */}
+              <div>
+                <h2 className="font-display text-2xl text-neon-green mb-4">
+                  Player Leaderboard
+                </h2>
+                <PlayerLeaderboard />
+              </div>
+
+              {/* Pair Leaderboard */}
+              <div>
+                <h2 className="font-display text-2xl text-neon-pink mb-4">
+                  Pair Leaderboard
+                </h2>
+                <PairLeaderboard />
+              </div>
+            </div>
+          </Tabs.Content>
+        </Tabs>
       </div>
     </PageLayout>
   )
