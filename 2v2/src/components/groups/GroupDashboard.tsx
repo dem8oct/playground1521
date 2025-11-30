@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useSession } from '../../contexts/SessionContext'
 import { getGroupDetails, updateGroup, deleteGroup } from '../../lib/api/groups'
 import { PageLayout, Card, Button, Input, Badge } from '../ui'
 import { GroupMembers } from './GroupMembers'
 import { InviteUser } from './InviteUser'
 import { GroupLeaderboards } from './GroupLeaderboards'
+import { GroupSessions } from './GroupSessions'
+import { CreateGroupSessionModal } from './CreateGroupSessionModal'
 
 interface GroupDetails {
   id: string
@@ -31,12 +34,18 @@ interface GroupDetails {
 interface GroupDashboardProps {
   groupId: string
   onBack?: () => void
+  onNavigateToSession?: (sessionId: string) => void
 }
 
-type TabType = 'overview' | 'members' | 'leaderboards' | 'settings'
+type TabType = 'overview' | 'sessions' | 'members' | 'leaderboards' | 'settings'
 
-export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
+export function GroupDashboard({
+  groupId,
+  onBack,
+  onNavigateToSession,
+}: GroupDashboardProps) {
   const { user } = useAuth()
+  const { joinGroupSession } = useSession()
   const [group, setGroup] = useState<GroupDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +55,7 @@ export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   async function loadGroup() {
     setLoading(true)
@@ -108,6 +118,29 @@ export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
     } catch (err: any) {
       console.error('Error deleting group:', err)
       alert(err.message || 'Failed to delete group')
+    }
+  }
+
+  function handleCreateSession() {
+    setShowCreateModal(true)
+  }
+
+  function handleCreateSessionSuccess(sessionId: string) {
+    setShowCreateModal(false)
+    if (onNavigateToSession) {
+      onNavigateToSession(sessionId)
+    }
+  }
+
+  async function handleJoinSession(sessionId: string) {
+    try {
+      await joinGroupSession(sessionId, groupId)
+      if (onNavigateToSession) {
+        onNavigateToSession(sessionId)
+      }
+    } catch (err: any) {
+      console.error('Error joining session:', err)
+      alert(err.message || 'Failed to join session')
     }
   }
 
@@ -178,6 +211,16 @@ export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
             Overview
           </button>
           <button
+            onClick={() => setActiveTab('sessions')}
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'sessions'
+                ? 'text-green-400 border-b-2 border-green-400'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Sessions
+          </button>
+          <button
             onClick={() => setActiveTab('members')}
             className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'members'
@@ -235,6 +278,14 @@ export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
               </div>
             </Card>
           </div>
+        )}
+
+        {activeTab === 'sessions' && (
+          <GroupSessions
+            groupId={groupId}
+            onCreateSession={handleCreateSession}
+            onJoinSession={handleJoinSession}
+          />
         )}
 
         {activeTab === 'members' && (
@@ -309,6 +360,15 @@ export function GroupDashboard({ groupId, onBack }: GroupDashboardProps) {
           </div>
         )}
       </div>
+
+      {/* Create Session Modal */}
+      {showCreateModal && (
+        <CreateGroupSessionModal
+          groupId={groupId}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSessionSuccess}
+        />
+      )}
     </PageLayout>
   )
 }

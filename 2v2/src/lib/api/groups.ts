@@ -289,6 +289,19 @@ export async function createGroupSession(data: {
   const user = (await supabase.auth.getUser()).data.user
   if (!user) throw new Error('Not authenticated')
 
+  // Validate user is group member
+  const { data: membership, error: memberError } = await supabase
+    .from('group_members')
+    .select('id')
+    .eq('group_id', data.groupId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (memberError) throw memberError
+  if (!membership) {
+    throw new Error('You must be a group member to create a group session')
+  }
+
   const insertData: SessionInsert = {
     initiator_user_id: user.id,
     join_code: data.joinCode,
@@ -307,23 +320,72 @@ export async function createGroupSession(data: {
   return session
 }
 
-export async function getGroupSessions(groupId: string) {
-  const { data, error } = await supabase
+export async function getGroupSessions(groupId: string, status?: string) {
+  let query = supabase
     .from('sessions')
     .select('*')
     .eq('group_id', groupId)
-    .order('created_at', { ascending: false })
+
+  if (status) {
+    query = query.eq('status', status)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) throw error
   return data
+}
+
+export async function getActiveGroupSessions(groupId: string) {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select(`
+      *,
+      session_players!session_id (
+        id
+      )
+    `)
+    .eq('group_id', groupId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  // Add player count to each session
+  return (data || []).map((session: any) => ({
+    ...session,
+    player_count: session.session_players?.length || 0,
+  }))
+}
+
+export async function joinGroupSession(sessionId: string, groupId: string) {
+  const user = (await supabase.auth.getUser()).data.user
+  if (!user) throw new Error('Not authenticated')
+
+  // Validate user is group member
+  const { data: membership, error: memberError } = await supabase
+    .from('group_members')
+    .select('id')
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (memberError) throw memberError
+  if (!membership) {
+    throw new Error('You must be a group member to join this session')
+  }
+
+  // Just validate membership - don't auto-add as player
+  // Only initiator/co-logger can add players via the lobby
+  console.log('User validated as group member, navigating to lobby')
 }
 
 // ============================================================================
 // GROUP LEADERBOARDS
 // ============================================================================
 
-export async function getGroupPlayerLeaderboard(groupId: string) {
-  // Get all session IDs for this group
+export async function getGroupAggregatePlayerStats(groupId: string) {
+  // Get all sessions for this group
   const { data: sessions, error: sessionsError } = await supabase
     .from('sessions')
     .select('id')
@@ -335,30 +397,72 @@ export async function getGroupPlayerLeaderboard(groupId: string) {
 
   if (sessionIds.length === 0) return []
 
-  // Get player stats for these sessions
-  const { data, error } = await supabase
+  // Get all player stats for these sessions
+  const { data: allStats, error: statsError } = await supabase
     .from('player_stats')
     .select(`
       *,
-      session_players (
-        display_name,
-        profile_id
+      session_players!inner (
+        profile_id,
+        display_name
       )
     `)
     .in('session_id', sessionIds)
-    .order('pts', { ascending: false })
-    .order('gd', { ascending: false })
-    .order('gf', { ascending: false })
 
-  if (error) throw error
+  if (statsError) throw statsError
 
-  // Aggregate stats by player (profile_id)
-  // This is a simplified version - you may want to do this aggregation in SQL
-  return data
+  // Group by profile_id and aggregate (only registered users)
+  const aggregateMap = new Map<string, any>()
+
+  for (const stat of allStats || []) {
+    const profileId = stat.session_players.profile_id
+
+    // Skip guest users (null profile_id)
+    if (!profileId) continue
+
+    if (!aggregateMap.has(profileId)) {
+      aggregateMap.set(profileId, {
+        profile_id: profileId,
+        display_name: stat.session_players.display_name,
+        mp: 0,
+        w: 0,
+        d: 0,
+        l: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+        pts: 0,
+      })
+    }
+
+    const agg = aggregateMap.get(profileId)
+    agg.mp += stat.mp
+    agg.w += stat.w
+    agg.d += stat.d
+    agg.l += stat.l
+    agg.gf += stat.gf
+    agg.ga += stat.ga
+    agg.gd += stat.gd
+    agg.pts += stat.pts
+  }
+
+  // Convert to array and sort by leaderboard rules
+  const leaderboard = Array.from(aggregateMap.values()).sort((a, b) => {
+    // 1. Points (descending)
+    if (a.pts !== b.pts) return b.pts - a.pts
+    // 2. Goal Difference (descending)
+    if (a.gd !== b.gd) return b.gd - a.gd
+    // 3. Goals For (descending)
+    if (a.gf !== b.gf) return b.gf - a.gf
+    // 4. Alphabetical by name
+    return a.display_name.localeCompare(b.display_name)
+  })
+
+  return leaderboard
 }
 
-export async function getGroupPairLeaderboard(groupId: string) {
-  // Similar to player leaderboard but for pairs
+export async function getGroupAggregatePairStats(groupId: string) {
+  // Get all sessions for this group
   const { data: sessions, error: sessionsError } = await supabase
     .from('sessions')
     .select('id')
@@ -370,16 +474,145 @@ export async function getGroupPairLeaderboard(groupId: string) {
 
   if (sessionIds.length === 0) return []
 
-  const { data, error } = await supabase
+  // Get all pair stats for these sessions
+  const { data: allPairStats, error: statsError } = await supabase
     .from('pair_stats')
     .select('*')
     .in('session_id', sessionIds)
-    .order('pts', { ascending: false })
-    .order('gd', { ascending: false })
-    .order('gf', { ascending: false })
+
+  if (statsError) throw statsError
+
+  // Group by normalized pair (sorted player IDs)
+  const aggregateMap = new Map<string, any>()
+
+  for (const stat of allPairStats || []) {
+    // Create normalized pair key
+    const pairKey = [stat.session_player_id_1, stat.session_player_id_2]
+      .sort()
+      .join('_')
+
+    if (!aggregateMap.has(pairKey)) {
+      aggregateMap.set(pairKey, {
+        session_player_id_1: stat.session_player_id_1,
+        session_player_id_2: stat.session_player_id_2,
+        label: stat.label,
+        mp: 0,
+        w: 0,
+        d: 0,
+        l: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+        pts: 0,
+      })
+    }
+
+    const agg = aggregateMap.get(pairKey)
+    agg.mp += stat.mp
+    agg.w += stat.w
+    agg.d += stat.d
+    agg.l += stat.l
+    agg.gf += stat.gf
+    agg.ga += stat.ga
+    agg.gd += stat.gd
+    agg.pts += stat.pts
+  }
+
+  // Convert to array and sort
+  const leaderboard = Array.from(aggregateMap.values()).sort((a, b) => {
+    // 1. Points (descending)
+    if (a.pts !== b.pts) return b.pts - a.pts
+    // 2. Goal Difference (descending)
+    if (a.gd !== b.gd) return b.gd - a.gd
+    // 3. Goals For (descending)
+    if (a.gf !== b.gf) return b.gf - a.gf
+    // 4. Alphabetical by label
+    return a.label.localeCompare(b.label)
+  })
+
+  return leaderboard
+}
+
+export async function getGroupSessionBreakdown(groupId: string) {
+  // Get all sessions with their stats
+  const { data: sessions, error: sessionsError } = await supabase
+    .from('sessions')
+    .select(`
+      *,
+      player_stats (
+        *,
+        session_players!inner (
+          display_name,
+          profile_id
+        )
+      )
+    `)
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+
+  if (sessionsError) throw sessionsError
+
+  // Format each session with its leaderboard
+  return (sessions || []).map((session: any) => {
+    // Sort player stats for this session
+    const leaderboard = (session.player_stats || [])
+      .map((stat: any) => ({
+        ...stat,
+        display_name: stat.session_players.display_name,
+        profile_id: stat.session_players.profile_id,
+      }))
+      .sort((a: any, b: any) => {
+        if (a.pts !== b.pts) return b.pts - a.pts
+        if (a.gd !== b.gd) return b.gd - a.gd
+        if (a.gf !== b.gf) return b.gf - a.gf
+        return a.display_name.localeCompare(b.display_name)
+      })
+
+    return {
+      session: {
+        id: session.id,
+        created_at: session.created_at,
+        status: session.status,
+        ended_at: session.ended_at,
+      },
+      leaderboard,
+      match_count: 0, // Will need to fetch separately if needed
+    }
+  })
+}
+
+// ============================================================================
+// VALIDATION HELPERS
+// ============================================================================
+
+export async function validateGroupMembership(
+  userId: string,
+  groupId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('id')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle()
 
   if (error) throw error
-  return data
+  return !!data
+}
+
+export async function getUserGroupRole(
+  userId: string,
+  groupId: string
+): Promise<'admin' | 'member' | null> {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data?.role || null
 }
 
 // ============================================================================

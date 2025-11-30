@@ -15,6 +15,8 @@ interface SessionContextType {
   loading: boolean
   createSession: () => Promise<Session>
   joinSession: (joinCode: string) => Promise<Session>
+  createGroupSession: (groupId: string) => Promise<Session>
+  joinGroupSession: (sessionId: string, groupId: string) => Promise<Session>
   endSession: () => Promise<void>
   leaveSession: () => void
   addPlayer: (displayName: string, profileId?: string) => Promise<void>
@@ -241,6 +243,72 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function createGroupSession(groupId: string): Promise<Session> {
+    if (!user) throw new Error('Must be logged in to create group session')
+
+    const { generateJoinCode, getSessionExpiration } = await import(
+      '../lib/sessionUtils'
+    )
+    const { createGroupSession: apiCreateGroupSession } = await import(
+      '../lib/api/groups'
+    )
+
+    try {
+      const joinCode = generateJoinCode()
+      const expiresAt = getSessionExpiration()
+
+      console.log('Creating group session for group:', groupId)
+
+      const session = await apiCreateGroupSession({
+        groupId,
+        joinCode,
+        expiresAt,
+      })
+
+      console.log('Group session created successfully:', session)
+      setActiveSession(session)
+      localStorage.setItem('2v2-kickoff-session', session.id)
+      return session
+    } catch (error: any) {
+      console.error('Error creating group session:', error)
+      throw error
+    }
+  }
+
+  async function joinGroupSession(
+    sessionId: string,
+    groupId: string
+  ): Promise<Session> {
+    const { joinGroupSession: apiJoinGroupSession } = await import(
+      '../lib/api/groups'
+    )
+
+    try {
+      console.log('Joining group session:', sessionId)
+
+      // Call API to join (validates membership)
+      await apiJoinGroupSession(sessionId, groupId)
+
+      // Load the session
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single()
+
+      if (error) throw error
+
+      console.log('Successfully joined group session:', data)
+      setActiveSession(data)
+      localStorage.setItem('2v2-kickoff-session', data.id)
+      await loadSessionPlayers(data.id)
+      return data
+    } catch (error) {
+      console.error('Error joining group session:', error)
+      throw error
+    }
+  }
+
   async function endSession(): Promise<void> {
     console.log('endSession called', { activeSession, user })
 
@@ -372,6 +440,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     loading,
     createSession,
     joinSession,
+    createGroupSession,
+    joinGroupSession,
     endSession,
     leaveSession,
     addPlayer,
