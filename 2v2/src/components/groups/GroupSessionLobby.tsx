@@ -32,6 +32,7 @@ export function GroupSessionLobby({
   const {
     activeSession,
     sessionPlayers,
+    addPlayer,
     removePlayer,
     setCoLogger,
     endSession,
@@ -42,6 +43,7 @@ export function GroupSessionLobby({
   const [groupName, setGroupName] = useState('')
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([])
   const [loading, setLoading] = useState(false)
+  const [guestName, setGuestName] = useState('')
 
   // Auto-refresh every 5 seconds
   useEffect(() => {
@@ -69,6 +71,10 @@ export function GroupSessionLobby({
   if (!activeSession) return null
 
   const isInitiator = user?.id === activeSession.initiator_user_id
+  const isCoLogger = sessionPlayers.some(
+    (p) => p.id === activeSession.co_logger_player_id && p.profile_id === user?.id
+  )
+  const canAddPlayers = isInitiator || isCoLogger
   const playerCount = sessionPlayers.length
   const isGroupSession = activeSession.session_type === 'group'
 
@@ -88,6 +94,25 @@ export function GroupSessionLobby({
     } catch (error: any) {
       console.error('Error adding member:', error)
       toast.error(error?.message || 'Failed to add member')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleAddGuest() {
+    if (!guestName.trim()) {
+      toast.error('Please enter a guest name')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await addPlayer(guestName.trim())
+      toast.success(`Guest "${guestName}" added to session`)
+      setGuestName('')
+    } catch (error: any) {
+      console.error('Error adding guest:', error)
+      toast.error(error?.message || 'Failed to add guest')
     } finally {
       setLoading(false)
     }
@@ -214,21 +239,21 @@ export function GroupSessionLobby({
             </h2>
             <Button
               onClick={onContinue}
-              variant={playerCount >= 4 ? 'primary' : 'ghost'}
+              variant={playerCount >= 3 ? 'primary' : 'ghost'}
             >
-              {playerCount >= 4 ? 'Start Session' : 'View Dashboard'}
+              Enter Session
             </Button>
           </div>
 
-          {playerCount < 4 && isInitiator && (
+          {playerCount < 3 && canAddPlayers && (
             <p className="font-mono text-sm text-neon-yellow mb-4">
-              ⚠️ Need at least 4 players to start logging matches
+              ⚠️ Need at least 3 players to start (4th player optional for 2v1)
             </p>
           )}
 
-          {!isInitiator && (
+          {!canAddPlayers && (
             <p className="font-mono text-sm text-gray-400 mb-4">
-              ℹ️ Group members will automatically join as they connect
+              ℹ️ Only the initiator or co-logger can add players
             </p>
           )}
 
@@ -237,7 +262,7 @@ export function GroupSessionLobby({
           </p>
 
           {/* Available Members to Add */}
-          {isInitiator && availableMembers.length > 0 && (
+          {canAddPlayers && availableMembers.length > 0 && (
             <div className="mb-6">
               <h3 className="font-mono text-sm text-gray-400 mb-3">
                 Available Group Members:
@@ -272,6 +297,38 @@ export function GroupSessionLobby({
             </div>
           )}
 
+          {/* Guest Player Section */}
+          {canAddPlayers && (
+            <div className="mb-6">
+              <h3 className="font-mono text-sm text-gray-400 mb-3">
+                Add Guest Player:
+              </h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddGuest()
+                  }}
+                  placeholder="Enter guest name..."
+                  className="flex-1 px-3 py-2 bg-bg-secondary border border-border rounded font-mono text-sm text-white placeholder-gray-500 focus:outline-none focus:border-neon-green"
+                  disabled={loading}
+                />
+                <Button
+                  variant="primary"
+                  onClick={handleAddGuest}
+                  disabled={loading || !guestName.trim()}
+                >
+                  Add Guest
+                </Button>
+              </div>
+              <p className="font-mono text-xs text-gray-500 mt-2">
+                Guest players won't be tracked in group leaderboards
+              </p>
+            </div>
+          )}
+
           {/* Player List */}
           <div className="space-y-2">
             {sessionPlayers.length === 0 && (
@@ -299,19 +356,19 @@ export function GroupSessionLobby({
                     </Badge>
                   )}
                 </div>
-                {isInitiator && (
-                  <div className="flex gap-2">
-                    {player.profile_id && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleSetCoLogger(player.id)}
-                      >
-                        {player.id === activeSession.co_logger_player_id
-                          ? 'Remove Co-Logger'
-                          : 'Make Co-Logger'}
-                      </Button>
-                    )}
+                <div className="flex gap-2">
+                  {isInitiator && player.profile_id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleSetCoLogger(player.id)}
+                    >
+                      {player.id === activeSession.co_logger_player_id
+                        ? 'Remove Co-Logger'
+                        : 'Make Co-Logger'}
+                    </Button>
+                  )}
+                  {canAddPlayers && (
                     <Button
                       size="sm"
                       variant="danger"
@@ -319,8 +376,8 @@ export function GroupSessionLobby({
                     >
                       Remove
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
           </div>

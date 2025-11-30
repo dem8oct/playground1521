@@ -23,7 +23,7 @@ export default function Dashboard({ onBackToLobby }: DashboardProps) {
     }
   }
 
-  const canLogMatches = sessionPlayers.length >= 4
+  const canLogMatches = sessionPlayers.length >= 3
 
   return (
     <PageLayout
@@ -50,7 +50,7 @@ export default function Dashboard({ onBackToLobby }: DashboardProps) {
         {!canLogMatches && (
           <div className="bg-yellow-500/10 border-4 border-yellow-500/50 p-4 mb-6">
             <p className="font-mono text-yellow-500 text-center">
-              ⚠️ Need at least 4 players to log matches. Add more players in the lobby.
+              ⚠️ Need at least 3 players to log matches (4th player optional for 2v1). Add more players in the lobby.
             </p>
           </div>
         )}

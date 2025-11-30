@@ -10,7 +10,7 @@ import JoinSessionForm from './components/session/JoinSessionForm'
 import SessionLobby from './components/session/SessionLobby'
 import { Dashboard } from './components/matches'
 import { PageLayout, Button } from './components/ui'
-import { GroupsList, GroupDashboard, UserInvites } from './components/groups'
+import { GroupsList, GroupDashboard, UserInvites, GroupSessionLobby } from './components/groups'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,9 +25,10 @@ function AppContent() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { activeSession, loading: sessionLoading, leaveSession } = useSession()
   const [view, setView] = useState<
-    'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail'
+    'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail' | 'group-session-lobby'
   >('auth')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
 
   async function handleSignOut() {
     try {
@@ -61,10 +62,41 @@ function AppContent() {
     )
   }
 
+  // Handle group detail view - allow this even with active session
+  if (view === 'group-detail' && selectedGroupId) {
+    if (!user) {
+      setView('auth')
+      return null
+    }
+    return (
+      <GroupDashboard
+        groupId={selectedGroupId}
+        onBack={() => setView('groups')}
+        onNavigateToSession={(sessionId) => {
+          setSelectedSessionId(sessionId)
+          setView('group-session-lobby')
+        }}
+      />
+    )
+  }
+
   // If there's an active session, show lobby or dashboard
   if (activeSession) {
     if (view === 'dashboard') {
       return <Dashboard onBackToLobby={() => setView('lobby')} />
+    }
+
+    // Check if it's a group session
+    if (activeSession.session_type === 'group' && selectedGroupId && view === 'group-session-lobby') {
+      return (
+        <GroupSessionLobby
+          groupId={selectedGroupId}
+          onContinue={() => setView('dashboard')}
+          onBack={() => {
+            setView('group-detail')
+          }}
+        />
+      )
     }
 
     return <SessionLobby onContinue={() => setView('dashboard')} />
@@ -177,19 +209,6 @@ function AppContent() {
     )
   }
 
-  // Handle group detail view
-  if (view === 'group-detail' && selectedGroupId) {
-    if (!user) {
-      setView('auth')
-      return null
-    }
-    return (
-      <GroupDashboard
-        groupId={selectedGroupId}
-        onBack={() => setView('groups')}
-      />
-    )
-  }
 
   // No active session - show auth/create/join options
   if (!user) {

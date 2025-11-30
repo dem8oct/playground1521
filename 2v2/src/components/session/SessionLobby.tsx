@@ -152,14 +152,14 @@ export default function SessionLobby({ onContinue }: SessionLobbyProps) {
             <h2 className="font-display text-xl text-neon-green">
               Players ({playerCount}/10)
             </h2>
-            <Button onClick={onContinue} variant={playerCount >= 4 ? 'primary' : 'ghost'}>
-              {playerCount >= 4 ? 'Start Session' : 'View Dashboard'}
+            <Button onClick={onContinue} variant={playerCount >= 3 ? 'primary' : 'ghost'}>
+              Enter Session
             </Button>
           </div>
 
-          {playerCount < 4 && isInitiator && (
+          {playerCount < 3 && isInitiator && (
             <p className="font-mono text-sm text-neon-yellow mb-4">
-              ⚠️ Need at least 4 players to start logging matches
+              ⚠️ Need at least 3 players to start (4th player optional for 2v1)
             </p>
           )}
 
