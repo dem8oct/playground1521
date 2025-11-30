@@ -11,6 +11,7 @@ import SessionLobby from './components/session/SessionLobby'
 import { Dashboard } from './components/matches'
 import { PageLayout, Button } from './components/ui'
 import { GroupsList, GroupDashboard, UserInvites, GroupSessionLobby } from './components/groups'
+import { AdminPanel } from './components/admin'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,13 +23,12 @@ const queryClient = new QueryClient({
 })
 
 function AppContent() {
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, profile, loading: authLoading, signOut } = useAuth()
   const { activeSession, loading: sessionLoading, leaveSession } = useSession()
   const [view, setView] = useState<
-    'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail' | 'group-session-lobby'
+    'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail' | 'group-session-lobby' | 'admin'
   >('auth')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
 
   async function handleSignOut() {
     try {
@@ -209,6 +209,22 @@ function AppContent() {
     )
   }
 
+  // Handle admin view (admin users only)
+  if (view === 'admin') {
+    if (!user) {
+      setView('auth')
+      return null
+    }
+
+    // Check if user is admin
+    if (!profile?.is_admin) {
+      toast.error('Unauthorized: Admin access required')
+      setView('auth')
+      return null
+    }
+
+    return <AdminPanel onBack={() => setView('auth')} />
+  }
 
   // No active session - show auth/create/join options
   if (!user) {
@@ -271,6 +287,15 @@ function AppContent() {
           >
             Group Invites
           </Button>
+          {profile?.is_admin && (
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setView('admin')}
+            >
+              ⚡ Admin Panel
+            </Button>
+          )}
         </div>
       </div>
     </PageLayout>

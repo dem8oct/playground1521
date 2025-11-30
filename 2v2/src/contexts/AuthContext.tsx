@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/types'
@@ -20,18 +20,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout
 
-    // Safety timeout for auth loading
-    timeoutId = setTimeout(() => {
+    // Safety timeout for auth loading (20 seconds to handle slow connections)
+    timeoutRef.current = setTimeout(() => {
       if (mounted) {
-        console.warn('Auth loading timed out after 5 seconds')
+        console.warn('Auth loading timed out after 20 seconds')
         setLoading(false)
       }
-    }, 5000)
+    }, 20000)
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,13 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadProfile(session.user.id)
       } else {
         console.log('No session, setting loading to false')
-        clearTimeout(timeoutId)
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
         setLoading(false)
       }
     }).catch(err => {
       console.error('Error getting initial session:', err)
       if (mounted) {
-        clearTimeout(timeoutId)
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
         setLoading(false)
       }
     })
@@ -80,28 +80,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
       subscription.unsubscribe()
     }
   }, [])
 
   async function loadProfile(userId: string) {
     try {
+      console.log('[AUTH] Loading profile for user:', userId)
+      const startTime = Date.now()
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle()
 
+      const loadTime = Date.now() - startTime
+      console.log(`[AUTH] Profile query took ${loadTime}ms`)
+
       if (error) {
-        console.error('Error loading profile:', error)
+        console.error('[AUTH] Error loading profile:', error)
         throw error
+      }
+
+      if (!data) {
+        console.warn('[AUTH] No profile found for user:', userId)
+      } else {
+        console.log('[AUTH] Profile loaded successfully:', {
+          username: data.username,
+          display_name: data.display_name,
+          is_admin: data.is_admin
+        })
       }
 
       setProfile(data)
     } catch (error) {
-      console.error('Failed to load profile:', error)
+      console.error('[AUTH] Failed to load profile:', error)
+      // Set profile to null on error so app doesn't get stuck
+      setProfile(null)
     } finally {
+      // Clear timeout when profile loading completes
+      if (timeoutRef.current) {
+        console.log('[AUTH] Clearing timeout and setting loading to false')
+        clearTimeout(timeoutRef.current)
+      }
       setLoading(false)
     }
   }
