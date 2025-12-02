@@ -2,7 +2,7 @@ import { HTMLAttributes, ReactNode } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
-  variant?: 'default' | 'neon-green' | 'neon-pink' | 'neon-yellow'
+  variant?: 'default' | 'neon-green' | 'neon-pink' | 'neon-yellow' | 'neon-blue'
 }
 
 const Card = ({ children, variant = 'default', className = '', ...props }: CardProps) => {
@@ -11,6 +11,7 @@ const Card = ({ children, variant = 'default', className = '', ...props }: CardP
     'neon-green': 'bg-bg-card border-neon-green shadow-brutal-neon-green',
     'neon-pink': 'bg-bg-card border-neon-pink shadow-brutal-neon-pink',
     'neon-yellow': 'bg-bg-card border-neon-yellow shadow-brutal-neon-yellow',
+    'neon-blue': 'bg-bg-card border-neon-blue shadow-brutal-neon-blue',
   }
 
   return (

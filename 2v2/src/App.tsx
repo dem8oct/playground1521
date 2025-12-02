@@ -29,6 +29,7 @@ function AppContent() {
     'auth' | 'create' | 'join' | 'lobby' | 'dashboard' | 'groups' | 'invites' | 'group-detail' | 'group-session-lobby' | 'admin'
   >('auth')
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [, setSelectedSessionId] = useState<string | null>(null)
 
   async function handleSignOut() {
     try {

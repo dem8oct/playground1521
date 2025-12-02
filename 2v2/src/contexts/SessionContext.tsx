@@ -58,7 +58,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             .select('*')
             .eq('id', storedSessionId)
             .eq('status', 'active')
-            .maybeSingle()
+            .maybeSingle<Session>()
 
           if (error) {
             console.error('Error loading stored session:', error)
@@ -104,6 +104,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at')
+        .returns<SessionPlayer[]>()
 
       if (error) throw error
       setSessionPlayers(data || [])
@@ -147,35 +148,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       console.log('Starting database insert...')
       const insertPromise = supabase
         .from('sessions')
-        .insert(insertData as any)
+        .insert(insertData as never)
         .select()
-        .single()
-        .then(result => {
-          console.log('Database insert completed:', result)
-          return result
-        })
-        .catch(err => {
-          console.log('Database insert error:', err)
-          throw err
-        })
+        .single<Session>()
 
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => {
           console.log('Database request timed out!')
           reject(new Error('Database request timed out after 10 seconds'))
         }, 10000)
       )
 
-      const result = await Promise.race([insertPromise, timeoutPromise]) as any
-
-      console.log('Race result:', result)
-      console.log('Result type:', typeof result)
-      console.log('Result keys:', Object.keys(result || {}))
-
-      const { data, error } = result
-
-      console.log('Insert response - data:', data)
-      console.log('Insert response - error:', error)
+      const { data, error } = await Promise.race([insertPromise, timeoutPromise])
 
       if (error) {
         console.error('Supabase error:', error)
@@ -183,7 +167,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
 
       if (!data) {
-        console.error('No data in response, full result:', result)
         throw new Error('No session data returned')
       }
 
@@ -208,21 +191,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('join_code', joinCode.toUpperCase())
         .eq('status', 'active')
-        .maybeSingle()
-        .then(result => {
-          console.log('Join query completed:', result)
-          return result
-        })
+        .maybeSingle<Session>()
 
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => {
           console.log('Join session query timed out!')
           reject(new Error('Request timed out after 10 seconds. Please check your connection.'))
         }, 10000)
       )
 
-      const result = await Promise.race([queryPromise, timeoutPromise]) as any
-      const { data, error } = result
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise])
 
       if (error) {
         console.error('Supabase error:', error)
@@ -294,7 +272,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         .from('sessions')
         .select('*')
         .eq('id', sessionId)
-        .single()
+        .single<Session>()
 
       if (error) throw error
 
@@ -329,9 +307,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase
         .from('sessions')
         .update({
-          status: 'ended',
+          status: 'ended' as const,
           ended_at: new Date().toISOString(),
-        } as any)
+        } as never)
         .eq('id', activeSession.id)
 
       if (error) {
@@ -368,7 +346,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         session_id: activeSession.id,
         display_name: displayName,
         profile_id: profileId || null,
-      } as any)
+      } as never)
 
       if (error) throw error
 
@@ -403,7 +381,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase
         .from('sessions')
-        .update({ co_logger_player_id: playerId } as any)
+        .update({ co_logger_player_id: playerId } as never)
         .eq('id', activeSession.id)
 
       if (error) throw error
@@ -423,7 +401,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         .from('sessions')
         .select('*')
         .eq('id', activeSession.id)
-        .single()
+        .single<Session>()
 
       if (error) throw error
 

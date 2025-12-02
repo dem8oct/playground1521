@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle()
+        .maybeSingle<Profile>()
 
       const loadTime = Date.now() - startTime
       console.log(`[AUTH] Profile query took ${loadTime}ms`)
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName } as any)
+        .update({ display_name: displayName } as never)
         .eq('id', user.id)
 
       if (error) throw error

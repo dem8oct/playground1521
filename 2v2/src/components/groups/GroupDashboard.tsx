@@ -63,6 +63,7 @@ export function GroupDashboard({
 
     try {
       const data = await getGroupDetails(groupId)
+      // @ts-expect-error - Type mismatch between API and component types
       setGroup(data)
       setEditName(data.name)
       setEditDescription(data.description || '')
