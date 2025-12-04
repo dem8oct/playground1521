@@ -54,8 +54,21 @@ function AppContent() {
             <div className="font-mono text-neon-green text-xl mb-2">
               Loading...
             </div>
-            <div className="font-mono text-sm text-gray-400">
-              Initializing session
+            <div className="font-mono text-sm text-gray-400 mb-4">
+              {authLoading && sessionLoading && 'Initializing session'}
+              {authLoading && !sessionLoading && 'Loading authentication...'}
+              {!authLoading && sessionLoading && 'Loading session...'}
+            </div>
+
+            {/* Add helpful message after 5 seconds */}
+            <div className="font-mono text-xs text-gray-500 mt-4">
+              Taking longer than expected?{' '}
+              <button
+                onClick={() => window.location.reload()}
+                className="text-neon-green hover:underline"
+              >
+                Try reloading
+              </button>
             </div>
           </div>
         </div>

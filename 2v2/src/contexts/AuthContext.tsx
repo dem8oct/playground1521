@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/types'
@@ -20,30 +20,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const loadingProfileRef = useRef(false)
+  const currentUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
+    let timeoutId: NodeJS.Timeout
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return
+    async function loadAuth() {
+      try {
+        // Add timeout protection - 10 seconds
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.warn('[AUTH] Loading timed out after 10 seconds')
+            setLoading(false)
+          }
+        }, 10000)
 
-      console.log('Initial session check:', session ? 'logged in' : 'not logged in')
-      setSession(session)
-      setUser(session?.user ?? null)
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession()
 
-      if (session?.user) {
-        loadProfile(session.user.id)
-      } else {
-        console.log('No session, setting loading to false')
-        setLoading(false)
+        if (!mounted) return
+
+        console.log('Initial session check:', session ? 'logged in' : 'not logged in')
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        if (session?.user) {
+          await loadProfile(session.user.id)
+        } else {
+          console.log('No session, setting loading to false')
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('Error getting initial session:', err)
+        if (mounted) {
+          setLoading(false)
+        }
+      } finally {
+        clearTimeout(timeoutId)
       }
-    }).catch(err => {
-      console.error('Error getting initial session:', err)
-      if (mounted) {
-        setLoading(false)
-      }
-    })
+    }
+
+    loadAuth()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -69,20 +88,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
+      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
 
   async function loadProfile(userId: string) {
+    // Prevent duplicate loads
+    if (loadingProfileRef.current) {
+      console.log('[AUTH] Profile load already in progress, skipping')
+      return
+    }
+
+    // Skip if we already have the profile for this user
+    if (currentUserIdRef.current === userId && profile) {
+      console.log('[AUTH] Profile already loaded for this user, skipping')
+      return
+    }
+
+    loadingProfileRef.current = true
+    currentUserIdRef.current = userId
+
+    let queryTimeoutId: NodeJS.Timeout | undefined
     try {
       console.log('[AUTH] Loading profile for user:', userId)
       const startTime = Date.now()
 
-      const { data, error } = await supabase
+      // Add query-level timeout protection
+      const queryPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle<Profile>()
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        queryTimeoutId = setTimeout(() => {
+          console.error('[AUTH] Profile query timed out after 10 seconds')
+          reject(new Error('Profile query timeout'))
+        }, 10000)
+      })
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise])
+
+      // Clear timeout if query succeeded
+      if (queryTimeoutId) clearTimeout(queryTimeoutId)
 
       const loadTime = Date.now() - startTime
       console.log(`[AUTH] Profile query took ${loadTime}ms`)
@@ -108,6 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set profile to null on error so app doesn't get stuck
       setProfile(null)
     } finally {
+      // Ensure timeout is cleared in all cases
+      if (queryTimeoutId) clearTimeout(queryTimeoutId)
+      loadingProfileRef.current = false
       console.log('[AUTH] Setting loading to false')
       setLoading(false)
     }
@@ -135,6 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setProfile(null)
       setSession(null)
+      loadingProfileRef.current = false
+      currentUserIdRef.current = null
     } catch (error) {
       console.error('Sign out error:', error)
       throw error
