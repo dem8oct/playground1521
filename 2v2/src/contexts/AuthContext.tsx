@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/types'
+import { posthog } from '../lib/posthog'
 
 interface AuthContextType {
   user: User | null
@@ -149,6 +150,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           display_name: data.display_name,
           is_admin: data.is_admin
         })
+
+        // Identify user in PostHog
+        posthog.identify(userId, {
+          username: data.username,
+          display_name: data.display_name,
+          is_admin: data.is_admin,
+        })
       }
 
       setProfile(data)
@@ -189,6 +197,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null)
       loadingProfileRef.current = false
       currentUserIdRef.current = null
+
+      // Reset PostHog user identification
+      posthog.reset()
     } catch (error) {
       console.error('Sign out error:', error)
       throw error

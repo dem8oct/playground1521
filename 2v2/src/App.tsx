@@ -4,6 +4,8 @@ import toast from 'react-hot-toast'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SessionProvider, useSession } from './contexts/SessionContext'
+import { PostHogProvider } from './contexts/PostHogContext'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import AuthScreen from './components/auth/AuthScreen'
 import CreateSessionForm from './components/session/CreateSessionForm'
 import JoinSessionForm from './components/session/JoinSessionForm'
@@ -318,36 +320,40 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SessionProvider>
-          <AppContent />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: '#151930',
-                color: '#fff',
-                border: '2px solid #00FF94',
-                fontFamily: 'monospace',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#00FF94',
-                  secondary: '#151930',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#FF2E97',
-                  secondary: '#151930',
-                },
-              },
-            }}
-          />
-        </SessionProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <PostHogProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <SessionProvider>
+              <AppContent />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: '#151930',
+                    color: '#fff',
+                    border: '2px solid #00FF94',
+                    fontFamily: 'monospace',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#00FF94',
+                      secondary: '#151930',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#FF2E97',
+                      secondary: '#151930',
+                    },
+                  },
+                }}
+              />
+            </SessionProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </PostHogProvider>
+    </ErrorBoundary>
   )
 }
 

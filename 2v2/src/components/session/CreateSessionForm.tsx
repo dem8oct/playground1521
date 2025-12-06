@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSession } from '../../contexts/SessionContext'
 import { Button, Card } from '../ui'
 import toast from 'react-hot-toast'
+import { posthog } from '../../lib/posthog'
 
 interface CreateSessionFormProps {
   onSuccess?: () => void
@@ -17,6 +18,13 @@ export default function CreateSessionForm({ onSuccess }: CreateSessionFormProps)
       console.log('CreateSessionForm: Starting session creation...')
       const session = await createSession()
       console.log('CreateSessionForm: Session created successfully:', session)
+
+      // Track session creation in PostHog
+      posthog.capture('session_created', {
+        session_id: session.id,
+        join_code: session.join_code,
+      })
+
       toast.success(`Session created! Join code: ${session.join_code}`)
       console.log('CreateSessionForm: Calling onSuccess callback')
       onSuccess?.()
@@ -25,6 +33,11 @@ export default function CreateSessionForm({ onSuccess }: CreateSessionFormProps)
       console.error('CreateSessionForm: Create session error:', error)
       const errorMessage = error?.message || 'Failed to create session'
       toast.error(errorMessage)
+
+      // Track session creation failure
+      posthog.capture('session_creation_failed', {
+        error: errorMessage,
+      })
     } finally {
       console.log('CreateSessionForm: Setting loading to false')
       setLoading(false)
